@@ -329,43 +329,64 @@ async function getStandings(league) {
     return { error: `Unknown league: ${league}` };
   }
 
-  const url = `${ESPN_BASE}/${leagueInfo.sport}/${leagueInfo.league}/standings`;
+  // Use the v2 API endpoint which has full standings data
+  const url = `https://site.api.espn.com/apis/v2/sports/${leagueInfo.sport}/${leagueInfo.league}/standings`;
   const data = await fetchESPN(url);
 
-  // Parse standings
+  // Parse standings from nested structure
   const standings = [];
   const groups = data.children || [];
   
   for (const group of groups) {
+    // Get entries from the standings object within each group
     const entries = group.standings?.entries || [];
+    
     for (const entry of entries) {
       const team = entry.team;
       const stats = entry.stats || [];
       
-      const getStat = (name) => stats.find(s => s.name === name)?.value || 0;
+      // Helper to find stat by name or abbreviation
+      const getStat = (names) => {
+        if (!Array.isArray(names)) names = [names];
+        for (const name of names) {
+          const stat = stats.find(s => 
+            s.name === name || 
+            s.abbreviation === name ||
+            s.displayName?.toLowerCase() === name.toLowerCase()
+          );
+          if (stat?.value !== undefined) return stat.value;
+        }
+        return 0;
+      };
       
       standings.push({
-        rank: getStat("rank") || getStat("playoffSeed") || standings.length + 1,
+        rank: getStat(["rank", "playoffSeed", "clincher"]) || standings.length + 1,
         name: team?.displayName || "Unknown",
+        abbreviation: team?.abbreviation || "",
         logo: team?.logos?.[0]?.href || null,
-        played: getStat("gamesPlayed") || getStat("games"),
-        won: getStat("wins"),
-        drawn: getStat("ties") || getStat("draws") || 0,
-        lost: getStat("losses"),
-        gf: getStat("pointsFor") || getStat("goalsFor") || 0,
-        ga: getStat("pointsAgainst") || getStat("goalsAgainst") || 0,
-        gd: getStat("pointDifferential") || getStat("goalDifference") || 0,
-        points: getStat("points") || 0,
-        winPct: getStat("winPercent") || 0,
-        streak: getStat("streak") || "",
+        played: getStat(["gamesPlayed", "GP", "games"]),
+        won: getStat(["wins", "W"]),
+        drawn: getStat(["ties", "T", "draws", "D"]),
+        lost: getStat(["losses", "L"]),
+        gf: getStat(["pointsFor", "PF", "goalsFor", "GF"]),
+        ga: getStat(["pointsAgainst", "PA", "goalsAgainst", "GA"]),
+        gd: getStat(["pointDifferential", "DIFF", "goalDifference", "GD"]),
+        points: getStat(["points", "PTS"]),
+        winPct: getStat(["winPercent", "PCT", "leagueWinPercent"]),
+        streak: getStat(["streak", "STRK"]),
+        division: group.name || "",
       });
     }
   }
 
-  // Sort by rank or points
+  // Sort by win percentage (for US sports) or points (for soccer)
   standings.sort((a, b) => {
-    if (a.rank && b.rank) return a.rank - b.rank;
-    return (b.points || b.winPct || 0) - (a.points || a.winPct || 0);
+    // For soccer, sort by points
+    if (a.points > 0 || b.points > 0) {
+      return b.points - a.points;
+    }
+    // For US sports, sort by win percentage
+    return b.winPct - a.winPct;
   });
 
   return standings.slice(0, 20);
