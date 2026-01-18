@@ -82,6 +82,14 @@ export async function generateAiSummary(articles, teamName) {
     return "📭 No articles found to summarize.";
   }
 
+  // Check if running on localhost without serverless (npm run dev)
+  const isLocalDev = window.location.port === "5173" || window.location.port === "5174";
+  
+  if (isLocalDev) {
+    // Skip AI on local dev (use vercel dev for full features)
+    return `🧪 Local dev mode - AI summary disabled. Found ${articles.length} articles about ${teamName}. Use \`vercel dev\` for full features.`;
+  }
+
   try {
     // Use our serverless function to avoid CORS issues with OpenAI
     const response = await fetch("/api/summary", {
