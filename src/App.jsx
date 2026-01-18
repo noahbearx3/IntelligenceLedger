@@ -538,38 +538,46 @@ export default function App() {
               <>
                 {/* Featured Teams */}
                 <div>
-                  <h3 className="text-sm font-semibold text-muted mb-3">🔥 Featured Teams</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Featured</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {FEATURED_TEAMS.map((team) => (
                       <button
                         key={team.name}
                         onClick={() => setSelectedTeam(team.name)}
-                        className={`group relative overflow-hidden rounded-xl border p-4 text-left transition-all ${
+                        className={`group relative overflow-hidden rounded-xl p-4 text-left transition-all duration-200 ${
                           selectedTeam === team.name
-                            ? "border-white/40 ring-2 ring-white/20"
-                            : "border-white/10 hover:border-white/30"
+                            ? "bg-surface-elevated ring-2 ring-accent shadow-glow-sm"
+                            : "bg-ink hover:bg-surface-elevated border border-border hover:border-accent/30"
                         }`}
-                        style={{
-                          background: `linear-gradient(135deg, ${team.primary}dd 0%, ${team.secondary}cc 100%)`,
-                        }}
                       >
+                        {/* Subtle team color accent */}
+                        <div 
+                          className="absolute inset-0 opacity-10"
+                          style={{ background: `linear-gradient(135deg, ${team.primary} 0%, transparent 60%)` }}
+                        />
+                        {/* Background logo */}
                         <img
                           src={getLogoUrl(team.abbr, team.league)}
                           alt=""
-                          className="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:opacity-30 transition-opacity"
+                          className="absolute -right-3 -bottom-3 w-20 h-20 opacity-10 group-hover:opacity-20 transition-opacity"
                         />
-                        <div className="relative z-10 flex items-start gap-2">
+                        <div className="relative z-10 flex items-start gap-3">
                           <img
                             src={getLogoUrl(team.abbr, team.league)}
                             alt={team.name}
-                            className="w-8 h-8 object-contain"
+                            className="w-10 h-10 object-contain"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-white truncate drop-shadow-md">{team.name}</div>
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-xs text-white/70 font-medium">{team.league}</span>
-                              <span className="text-xs text-white/90">{team.trending}</span>
+                            <div className="text-sm font-semibold text-text-primary truncate">{team.name}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span 
+                                className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                                style={{ backgroundColor: `${team.primary}30`, color: team.primary }}
+                              >
+                                {team.league}
+                              </span>
                             </div>
+                            <p className="text-xs text-text-muted mt-1.5">{team.trending}</p>
                           </div>
                         </div>
                       </button>
@@ -578,42 +586,42 @@ export default function App() {
                 </div>
 
                 {/* League Filter + Team Search */}
-                <div className="flex flex-wrap items-end gap-4">
-                  <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex gap-1 rounded-lg bg-ink p-1">
                     {Object.keys(TEAMS_BY_LEAGUE).map((league) => (
                       <button
                         key={league}
                         onClick={() => { setSelectedLeague(league); setShowAllTeams(true); }}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                           selectedLeague === league
                             ? "bg-accent text-ink"
-                            : "bg-card border border-border hover:border-accent"
+                            : "text-text-muted hover:text-text-primary"
                         }`}
                       >
                         {league}
                       </button>
                     ))}
                   </div>
-                  <div className="flex-1 min-w-[200px]">
+                  <div className="flex-1 min-w-[180px]">
                     <input
                       type="text"
                       value={teamSearch}
                       onChange={(e) => { setTeamSearch(e.target.value); setShowAllTeams(true); }}
-                      placeholder="Search all teams..."
-                      className="w-full rounded-xl border border-border bg-ink px-4 py-2 text-sm"
+                      placeholder="Search teams..."
+                      className="w-full rounded-lg border border-border bg-ink px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
                     />
                   </div>
                   <button
                     onClick={() => setShowAllTeams(!showAllTeams)}
-                    className="text-xs text-accent hover:underline"
+                    className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
                   >
-                    {showAllTeams ? "Hide all" : `Browse all ${TEAMS_BY_LEAGUE[selectedLeague]?.length || 0} teams`}
+                    {showAllTeams ? "Collapse" : `Browse all →`}
                   </button>
                 </div>
 
                 {/* All Teams Grid */}
                 {showAllTeams && (
-                  <div className="rounded-xl border border-border bg-card/50 p-4 max-h-80 overflow-y-auto">
+                  <div className="rounded-xl bg-ink p-4 max-h-72 overflow-y-auto animate-fade-in">
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                       {(teamSearch
                         ? ALL_TEAMS.filter(t => t.name.toLowerCase().includes(teamSearch.toLowerCase()))
@@ -622,25 +630,22 @@ export default function App() {
                         <button
                           key={team.name}
                           onClick={() => { setSelectedTeam(team.name); setShowAllTeams(false); setTeamSearch(""); }}
-                          className={`group relative overflow-hidden rounded-lg p-2 text-left transition-all ${
+                          className={`group flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-all duration-150 ${
                             selectedTeam === team.name
-                              ? "ring-2 ring-white/40"
-                              : "hover:ring-1 hover:ring-white/20"
+                              ? "bg-accent/15 ring-1 ring-accent"
+                              : "hover:bg-surface-elevated"
                           }`}
-                          style={{
-                            background: `linear-gradient(135deg, ${team.primary}bb 0%, ${team.secondary}99 100%)`,
-                          }}
                         >
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={getLogoUrl(team.abbr, getLeagueForTeam(team.name))}
-                              alt=""
-                              className="w-6 h-6 object-contain"
-                            />
-                            <span className="text-xs font-medium text-white truncate drop-shadow-sm">
-                              {team.name}
-                            </span>
-                          </div>
+                          <img
+                            src={getLogoUrl(team.abbr, getLeagueForTeam(team.name))}
+                            alt=""
+                            className="w-6 h-6 object-contain"
+                          />
+                          <span className={`text-xs font-medium truncate ${
+                            selectedTeam === team.name ? "text-accent" : "text-text-secondary group-hover:text-text-primary"
+                          }`}>
+                            {team.name}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -653,17 +658,16 @@ export default function App() {
                   const league = getLeagueForTeam(selectedTeam);
                   if (!team) return null;
                   return (
-                    <div 
-                      className="relative overflow-hidden rounded-xl p-4"
-                      style={{
-                        background: `linear-gradient(135deg, ${team.primary}40 0%, ${team.secondary}30 100%)`,
-                        borderLeft: `4px solid ${team.primary}`,
-                      }}
-                    >
+                    <div className="relative overflow-hidden rounded-xl bg-ink border-l-4 border-accent p-4">
+                      {/* Subtle team color overlay */}
+                      <div 
+                        className="absolute inset-0 opacity-5"
+                        style={{ background: `linear-gradient(90deg, ${team.primary} 0%, transparent 50%)` }}
+                      />
                       <img
                         src={getLogoUrl(team.abbr, league)}
                         alt=""
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 opacity-15"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 opacity-10"
                       />
                       <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
@@ -673,19 +677,19 @@ export default function App() {
                             className="w-12 h-12 object-contain"
                           />
                           <div>
-                            <div className="text-xs text-muted">Currently viewing</div>
-                            <div className="text-xl font-bold text-white">{selectedTeam}</div>
+                            <p className="text-xs text-text-muted uppercase tracking-wider">Researching</p>
+                            <h3 className="text-lg font-bold text-text-primary">{selectedTeam}</h3>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-xs">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span 
-                            className="rounded-full px-3 py-1 font-semibold"
-                            style={{ backgroundColor: team.primary, color: '#fff' }}
+                            className="rounded-md px-2 py-1 text-xs font-medium"
+                            style={{ backgroundColor: `${team.primary}25`, color: team.primary }}
                           >
                             {league}
                           </span>
-                          <span className="rounded-full bg-white/10 px-3 py-1 text-white/80">
-                            2025 Season
+                          <span className="rounded-md bg-surface-elevated px-2 py-1 text-xs text-text-muted">
+                            2025
                           </span>
                         </div>
                       </div>
@@ -697,7 +701,7 @@ export default function App() {
               <>
                 {/* Featured Players */}
                 <div>
-                  <h3 className="text-sm font-semibold text-muted mb-3">⭐ Featured Players</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Featured</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {FEATURED_PLAYERS.map((player) => {
                       const teamData = findTeam(player.team);
@@ -706,44 +710,46 @@ export default function App() {
                         <button
                           key={player.name}
                           onClick={() => setSelectedPlayer(player.name)}
-                          className={`group relative overflow-hidden rounded-xl border p-4 text-left transition-all ${
+                          className={`group relative overflow-hidden rounded-xl p-4 text-left transition-all duration-200 ${
                             selectedPlayer === player.name
-                              ? "border-white/40 ring-2 ring-white/20"
-                              : "border-white/10 hover:border-white/30"
+                              ? "bg-surface-elevated ring-2 ring-accent shadow-glow-sm"
+                              : "bg-ink hover:bg-surface-elevated border border-border hover:border-accent/30"
                           }`}
-                          style={{
-                            background: teamData 
-                              ? `linear-gradient(135deg, ${teamData.primary}dd 0%, ${teamData.secondary}cc 100%)`
-                              : "linear-gradient(135deg, #333 0%, #222 100%)",
-                          }}
                         >
-                          {/* Team logo as background watermark */}
+                          {/* Subtle team color accent */}
+                          {teamData && (
+                            <div 
+                              className="absolute inset-0 opacity-10"
+                              style={{ background: `linear-gradient(135deg, ${teamData.primary} 0%, transparent 60%)` }}
+                            />
+                          )}
+                          {/* Team logo watermark */}
                           {teamData && (
                             <img
                               src={getLogoUrl(teamData.abbr, player.league)}
                               alt=""
-                              className="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:opacity-30 transition-opacity"
+                              className="absolute -right-3 -bottom-3 w-16 h-16 opacity-10 group-hover:opacity-20 transition-opacity"
                             />
                           )}
                           <div className="relative z-10">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                               <img
                                 src={getHeadshotUrl(player.id, player.league)}
                                 alt={player.name}
                                 onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
-                                className="w-10 h-10 rounded-full object-cover bg-black/20"
+                                className="w-11 h-11 rounded-full object-cover bg-surface border-2 border-border"
                               />
                               <div className="flex-1 min-w-0">
-                                <div className="text-sm font-bold text-white truncate drop-shadow-md">{player.name}</div>
+                                <div className="text-sm font-semibold text-text-primary truncate">{player.name}</div>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${posColor.bg} ${posColor.text}`}>
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${posColor.bg} ${posColor.text}`}>
                                     {player.position}
                                   </span>
-                                  <span className="text-xs text-white/60 truncate">{player.team}</span>
+                                  <span className="text-xs text-text-muted truncate">{player.team}</span>
                                 </div>
                               </div>
                             </div>
-                            <div className="mt-2 text-xs text-white/80">{player.trending}</div>
+                            <p className="mt-2 text-xs text-text-muted">{player.trending}</p>
                           </div>
                         </button>
                       );
@@ -752,79 +758,73 @@ export default function App() {
                 </div>
 
                 {/* League Filter + Player Search */}
-                <div className="flex flex-wrap items-end gap-4">
-                  <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex gap-1 rounded-lg bg-ink p-1">
                     {Object.keys(PLAYERS_BY_LEAGUE).map((league) => (
                       <button
                         key={league}
                         onClick={() => { setSelectedLeague(league); setShowAllPlayers(true); }}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                           selectedLeague === league
                             ? "bg-accent text-ink"
-                            : "bg-card border border-border hover:border-accent"
+                            : "text-text-muted hover:text-text-primary"
                         }`}
                       >
                         {league}
                       </button>
                     ))}
                   </div>
-                  <div className="flex-1 min-w-[200px]">
+                  <div className="flex-1 min-w-[180px]">
                     <input
                       type="text"
                       value={playerSearch}
                       onChange={(e) => { setPlayerSearch(e.target.value); setShowAllPlayers(true); }}
                       placeholder="Search players..."
-                      className="w-full rounded-xl border border-border bg-ink px-4 py-2 text-sm"
+                      className="w-full rounded-lg border border-border bg-ink px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
                     />
                   </div>
                   <button
                     onClick={() => setShowAllPlayers(!showAllPlayers)}
-                    className="text-xs text-accent hover:underline"
+                    className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
                   >
-                    {showAllPlayers ? "Hide all" : `Browse all ${PLAYERS_BY_LEAGUE[selectedLeague]?.length || 0} players`}
+                    {showAllPlayers ? "Collapse" : "Browse all →"}
                   </button>
                 </div>
 
                 {/* All Players Grid */}
                 {showAllPlayers && (
-                  <div className="rounded-xl border border-border bg-card/50 p-4 max-h-80 overflow-y-auto">
+                  <div className="rounded-xl bg-ink p-4 max-h-72 overflow-y-auto animate-fade-in">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                       {(playerSearch
                         ? ALL_PLAYERS.filter(p => p.name.toLowerCase().includes(playerSearch.toLowerCase()))
                         : PLAYERS_BY_LEAGUE[selectedLeague] || []
                       ).map((player) => {
-                        const teamData = findTeam(player.team);
                         const posColor = POSITION_COLORS[player.position] || { bg: "bg-gray-500/20", text: "text-gray-400" };
                         return (
                           <button
                             key={player.name}
                             onClick={() => { setSelectedPlayer(player.name); setShowAllPlayers(false); setPlayerSearch(""); }}
-                            className={`group relative overflow-hidden rounded-lg p-2 text-left transition-all ${
+                            className={`group flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-all duration-150 ${
                               selectedPlayer === player.name
-                                ? "ring-2 ring-white/40"
-                                : "hover:ring-1 hover:ring-white/20"
+                                ? "bg-accent/15 ring-1 ring-accent"
+                                : "hover:bg-surface-elevated"
                             }`}
-                            style={{
-                              background: teamData 
-                                ? `linear-gradient(135deg, ${teamData.primary}bb 0%, ${teamData.secondary}99 100%)`
-                                : "linear-gradient(135deg, #333 0%, #222 100%)",
-                            }}
                           >
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={getHeadshotUrl(player.id, getLeagueForPlayer(player.name))}
-                                alt=""
-                                onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
-                                className="w-8 h-8 rounded-full object-cover bg-black/20"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium text-white truncate">{player.name}</div>
-                                <div className="flex items-center gap-1">
-                                  <span className={`text-[10px] px-1 rounded ${posColor.bg} ${posColor.text}`}>
-                                    {player.position}
-                                  </span>
-                                </div>
+                            <img
+                              src={getHeadshotUrl(player.id, getLeagueForPlayer(player.name))}
+                              alt=""
+                              onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
+                              className="w-8 h-8 rounded-full object-cover bg-surface border border-border"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className={`text-xs font-medium truncate ${
+                                selectedPlayer === player.name ? "text-accent" : "text-text-secondary group-hover:text-text-primary"
+                              }`}>
+                                {player.name}
                               </div>
+                              <span className={`text-[10px] px-1 rounded ${posColor.bg} ${posColor.text}`}>
+                                {player.position}
+                              </span>
                             </div>
                           </button>
                         );
@@ -841,21 +841,20 @@ export default function App() {
                   const teamData = findTeam(player.team);
                   const posColor = POSITION_COLORS[player.position] || { bg: "bg-gray-500/20", text: "text-gray-400" };
                   return (
-                    <div 
-                      className="relative overflow-hidden rounded-xl p-4"
-                      style={{
-                        background: teamData 
-                          ? `linear-gradient(135deg, ${teamData.primary}40 0%, ${teamData.secondary}30 100%)`
-                          : "linear-gradient(135deg, #333 0%, #222 100%)",
-                        borderLeft: teamData ? `4px solid ${teamData.primary}` : "4px solid #666",
-                      }}
-                    >
-                      {/* Team logo as background watermark */}
+                    <div className="relative overflow-hidden rounded-xl bg-ink border-l-4 border-accent p-4">
+                      {/* Subtle team color overlay */}
+                      {teamData && (
+                        <div 
+                          className="absolute inset-0 opacity-5"
+                          style={{ background: `linear-gradient(90deg, ${teamData.primary} 0%, transparent 50%)` }}
+                        />
+                      )}
+                      {/* Team logo watermark */}
                       {teamData && (
                         <img
                           src={getLogoUrl(teamData.abbr, league)}
                           alt=""
-                          className="absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 opacity-15"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 opacity-10"
                         />
                       )}
                       <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
@@ -864,28 +863,30 @@ export default function App() {
                             src={getHeadshotUrl(player.id, league)}
                             alt={player.name}
                             onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
-                            className="w-14 h-14 rounded-full object-cover bg-black/20 border-2 border-white/20"
+                            className="w-12 h-12 rounded-full object-cover bg-surface border-2 border-border"
                           />
                           <div>
-                            <div className="text-xs text-muted">Currently viewing</div>
-                            <div className="text-xl font-bold text-white">{selectedPlayer}</div>
+                            <p className="text-xs text-text-muted uppercase tracking-wider">Researching</p>
+                            <h3 className="text-lg font-bold text-text-primary">{selectedPlayer}</h3>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className={`text-xs px-2 py-0.5 rounded ${posColor.bg} ${posColor.text}`}>
+                              <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${posColor.bg} ${posColor.text}`}>
                                 {player.position}
                               </span>
-                              <span className="text-xs text-white/60">{player.team}</span>
+                              <span className="text-xs text-text-muted">{player.team}</span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-xs">
-                          <span 
-                            className="rounded-full px-3 py-1 font-semibold"
-                            style={{ backgroundColor: teamData?.primary || "#666", color: '#fff' }}
-                          >
-                            {league}
-                          </span>
-                          <span className="rounded-full bg-white/10 px-3 py-1 text-white/80">
-                            2025 Season
+                        <div className="flex flex-wrap items-center gap-2">
+                          {teamData && (
+                            <span 
+                              className="rounded-md px-2 py-1 text-xs font-medium"
+                              style={{ backgroundColor: `${teamData.primary}25`, color: teamData.primary }}
+                            >
+                              {league}
+                            </span>
+                          )}
+                          <span className="rounded-md bg-surface-elevated px-2 py-1 text-xs text-text-muted">
+                            2025
                           </span>
                         </div>
                       </div>
