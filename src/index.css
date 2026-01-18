@@ -43,8 +43,8 @@ html {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -53,6 +53,7 @@ html {
 
 ::-webkit-scrollbar-thumb {
   @apply bg-border rounded-full;
+  transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -64,33 +65,207 @@ html {
   @apply bg-accent/30 text-text-primary;
 }
 
-/* Utility classes */
+/* ============================================
+   MICRO-INTERACTIONS & COMPONENT STYLES
+   ============================================ */
+
+@layer components {
+  /* Button base styles */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold;
+    @apply transition-all duration-150 ease-out;
+    @apply active:scale-[0.98];
+  }
+  
+  .btn-primary {
+    @apply bg-accent text-ink;
+    @apply hover:bg-accent-hover hover:shadow-glow-sm;
+  }
+  
+  .btn-secondary {
+    @apply bg-surface-elevated text-text-primary border border-border;
+    @apply hover:border-accent/40 hover:bg-surface;
+  }
+  
+  .btn-ghost {
+    @apply text-text-secondary;
+    @apply hover:text-text-primary hover:bg-surface-elevated;
+  }
+
+  /* Card styles with hover effects */
+  .card {
+    @apply rounded-xl bg-surface border border-border;
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .card-interactive {
+    @apply card cursor-pointer;
+    @apply hover:border-accent/30 hover:shadow-glow-sm;
+    @apply active:scale-[0.99];
+  }
+  
+  .card-selected {
+    @apply ring-2 ring-accent shadow-glow-sm;
+  }
+
+  /* Input styles */
+  .input {
+    @apply w-full rounded-lg border border-border bg-ink px-3 py-2 text-sm;
+    @apply text-text-primary placeholder:text-text-muted;
+    @apply transition-all duration-150 ease-out;
+    @apply focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30;
+  }
+  
+  /* Tab/Toggle styles */
+  .tab-group {
+    @apply flex gap-1 rounded-lg bg-ink p-1;
+  }
+  
+  .tab {
+    @apply rounded-md px-4 py-1.5 text-sm font-medium;
+    @apply transition-all duration-150 ease-out;
+    @apply text-text-muted hover:text-text-primary;
+  }
+  
+  .tab-active {
+    @apply bg-accent text-ink shadow-sm;
+  }
+}
+
+/* ============================================
+   ANIMATION UTILITIES
+   ============================================ */
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
   
-  .gold-glow {
+  /* Glow effects */
+  .glow {
     box-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
   }
   
-  .card-hover {
-    @apply transition-all duration-200 ease-out;
+  .glow-sm {
+    box-shadow: 0 0 10px rgba(245, 166, 35, 0.15);
   }
-  
-  .card-hover:hover {
-    @apply border-accent/30 shadow-glow-sm;
-  }
-}
 
-/* Animation classes */
-@layer utilities {
-  .animate-in {
-    animation: fadeIn 0.2s ease-out;
+  /* Smooth transitions */
+  .transition-fast {
+    @apply transition-all duration-100 ease-out;
   }
   
+  .transition-base {
+    @apply transition-all duration-150 ease-out;
+  }
+  
+  .transition-slow {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-transform duration-200 ease-out;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Pulse animation for live indicators */
+  .pulse-live {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Fade in animations */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+  }
+  
+  .animate-fade-in-down {
+    animation: fadeInDown 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes fadeInUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+  
+  @keyframes fadeInDown {
+    from { 
+      opacity: 0; 
+      transform: translateY(-10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  /* Stagger delays for list animations */
   .stagger-1 { animation-delay: 50ms; }
   .stagger-2 { animation-delay: 100ms; }
   .stagger-3 { animation-delay: 150ms; }
   .stagger-4 { animation-delay: 200ms; }
+  .stagger-5 { animation-delay: 250ms; }
+  .stagger-6 { animation-delay: 300ms; }
+
+  /* Skeleton loading */
+  .skeleton {
+    @apply bg-surface animate-pulse rounded;
+  }
+
+  /* Number counter effect (for stats) */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ============================================
+   SPECIAL EFFECTS
+   ============================================ */
+
+/* Gradient text for special headings */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #FFD700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Subtle noise texture overlay (optional) */
+.noise-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Glass effect for modals/overlays */
+.glass {
+  background: rgba(20, 20, 22, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

@@ -203,14 +203,14 @@ const Modal = ({ open, onClose, children, tone = "default" }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className={`w-full max-w-lg rounded-xl border border-border bg-card p-6 ${
-          tone === "alert" ? "shadow-[0_0_0_1px_rgba(245,158,11,0.3)]" : ""
+        className={`w-full max-w-lg rounded-2xl border border-border bg-surface p-6 shadow-2xl animate-fade-in-up ${
+          tone === "alert" ? "border-l-4 border-l-warning" : ""
         }`}
         onClick={(event) => event.stopPropagation()}
       >
@@ -485,7 +485,7 @@ export default function App() {
                   {loginName}
                 </div>
                 <button
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink transition-all hover:bg-accent-hover hover:shadow-glow-sm"
+                  className="btn btn-primary"
                   onClick={() => setPickOpen(true)}
                 >
                   Post Pick
@@ -494,12 +494,12 @@ export default function App() {
             ) : (
               <>
                 <button
-                  className="rounded-lg px-4 py-2 text-sm text-text-secondary transition-colors hover:text-text-primary"
+                  className="btn btn-ghost"
                   onClick={() => setLoginOpen(true)}
                 >
                   Log In
                 </button>
-                <button className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink transition-all hover:bg-accent-hover hover:shadow-glow-sm">
+                <button className="btn btn-primary">
                   Get Access
                 </button>
               </>
@@ -928,7 +928,7 @@ export default function App() {
                     Intelligence Feed
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-success pulse-live" />
                     <span className="text-xs text-text-muted">Live</span>
                   </div>
                 </div>
@@ -1074,11 +1074,11 @@ export default function App() {
                         handleAddTidbit();
                       }
                     }}
-                    className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
+                    className="input flex-1 bg-surface"
                     placeholder="Add intel..."
                   />
                   <button
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink hover:bg-accent-hover transition-colors"
+                    className="btn btn-primary"
                     onClick={handleAddTidbit}
                   >
                     Post
@@ -1413,7 +1413,7 @@ export default function App() {
                 value={pickUnits}
                 onChange={(e) => setPickUnits(Number(e.target.value))}
                 required
-                className="mt-2 w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
+                className="input mt-2"
               />
             </label>
 
@@ -1458,7 +1458,7 @@ export default function App() {
               value={loginName}
               onChange={(event) => setLoginName(event.target.value)}
               required
-              className="mt-2 w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
+              className="input mt-2"
             />
           </label>
           <label className="text-sm">
@@ -1467,7 +1467,7 @@ export default function App() {
               type="email"
               placeholder="bob@email.com"
               required
-              className="mt-2 w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
+              className="input mt-2"
             />
           </label>
           <label className="text-sm">
@@ -1476,10 +1476,10 @@ export default function App() {
               type="password"
               placeholder="••••••••"
               required
-              className="mt-2 w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
+              className="input mt-2"
             />
           </label>
-          <button className="w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink">
+          <button className="btn btn-primary w-full">
             Sign in
           </button>
         </form>
