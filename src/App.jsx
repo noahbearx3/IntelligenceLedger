@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getIntelligence } from "./services/newsApi";
 
 const rssItems = [
   {
@@ -217,12 +218,19 @@ const mockNewsData = [
   },
 ];
 
-// Source tag color mapping
+// Source tag color mapping (expanded for real sources)
 const sourceColors = {
   RSS: "bg-blue-500/20 text-blue-400",
   Twitter: "bg-sky-500/20 text-sky-400",
   Reddit: "bg-orange-500/20 text-orange-400",
   ESPN: "bg-emerald-500/20 text-emerald-400",
+  "ESPN.com": "bg-emerald-500/20 text-emerald-400",
+  "NFL.com": "bg-blue-600/20 text-blue-400",
+  "Yahoo Sports": "bg-purple-500/20 text-purple-400",
+  "CBS Sports": "bg-blue-500/20 text-blue-400",
+  "Bleacher Report": "bg-amber-500/20 text-amber-400",
+  "Pro Football Talk": "bg-sky-500/20 text-sky-400",
+  "The Athletic": "bg-rose-500/20 text-rose-400",
 };
 
 // Helper to format relative time
@@ -362,7 +370,7 @@ export default function App() {
     return summary;
   };
 
-  const performNewsSearch = (query) => {
+  const performNewsSearch = async (query) => {
     if (!query) return;
 
     setNewsSearchQuery(query);
@@ -370,34 +378,39 @@ export default function App() {
     setNewsLoading(true);
     setNewsError(null);
     setAiSummary("");
+    setNewsResults([]);
 
-    // Simulate API delay (would be real web search + AI in production)
-    setTimeout(() => {
-      try {
-        const searchLower = query.toLowerCase();
-        const filtered = mockNewsData
-          .filter((article) => {
-            const inHeadline = article.headline.toLowerCase().includes(searchLower);
-            const inSnippet = article.snippet.toLowerCase().includes(searchLower);
-            const inTeams = article.relatedTeams.some((team) =>
-              team.toLowerCase().includes(searchLower)
-            );
-            return inHeadline || inSnippet || inTeams;
-          })
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    try {
+      // Real API call to NewsAPI + OpenAI
+      const { articles, summary } = await getIntelligence(query);
+      
+      setNewsResults(articles);
+      setAiSummary(summary);
+      setNewsLoading(false);
+    } catch (err) {
+      console.error("News search error:", err);
+      
+      // Fallback to mock data if API fails
+      const searchLower = query.toLowerCase();
+      const filtered = mockNewsData
+        .filter((article) => {
+          const inHeadline = article.headline.toLowerCase().includes(searchLower);
+          const inSnippet = article.snippet.toLowerCase().includes(searchLower);
+          const inTeams = article.relatedTeams.some((team) =>
+            team.toLowerCase().includes(searchLower)
+          );
+          return inHeadline || inSnippet || inTeams;
+        })
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
+      if (filtered.length > 0) {
         setNewsResults(filtered);
-        
-        // Generate AI summary
-        const summary = generateAiSummary(filtered, query);
-        setAiSummary(summary);
-        
-        setNewsLoading(false);
-      } catch (err) {
+        setAiSummary(`⚠️ Live API unavailable. Showing cached data.\n\n📰 Found ${filtered.length} cached articles.`);
+      } else {
         setNewsError("Unable to load news. Please try again.");
-        setNewsLoading(false);
       }
-    }, 500); // Slightly longer delay to simulate AI processing
+      setNewsLoading(false);
+    }
   };
 
   const handleNewsSearch = () => {
