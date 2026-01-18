@@ -459,22 +459,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-ink text-slate-200">
-      <header className="sticky top-0 z-20 border-b border-border/50 bg-ink/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-8xl items-center justify-between gap-4 px-6 py-4 md:px-8">
+      <header className="sticky top-0 z-20 border-b border-border/50 bg-ink/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-8xl items-center justify-between gap-4 px-6 py-3 md:px-8">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent font-display text-lg font-bold text-ink">
-              IL
-            </div>
-            <div>
-              <h1 className="font-display text-lg font-bold tracking-tight text-text-primary">
-                Intelligence Ledger
-              </h1>
-              <p className="text-xs text-text-muted">
-                Sports betting intelligence
-              </p>
-            </div>
-          </div>
+          <a href="/" className="flex items-center gap-2 group">
+            <span className="text-2xl font-black tracking-tighter text-text-primary group-hover:text-accent transition-colors">
+              INTEL<span className="text-accent">.</span>
+            </span>
+          </a>
 
           {/* Nav */}
           <nav className="flex items-center gap-3">
