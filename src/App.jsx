@@ -273,6 +273,16 @@ export default function App() {
     { id: "n3", type: "upvote", message: "Your comment got 10 upvotes!", isRead: true, createdAt: "2025-01-16T18:00:00Z" },
   ]);
   const [notifOpen, setNotifOpen] = useState(false);
+  
+  // Mentions autocomplete state
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  
+  // Discover page state
+  const [discoverSort, setDiscoverSort] = useState("winRate");
+  const [discoverFilter, setDiscoverFilter] = useState("all"); // all, nfl, nba, nhl, mlb
+  const [showDiscover, setShowDiscover] = useState(false);
 
   // Odds selection state
   const [pickStep, setPickStep] = useState(1); // 1: sport, 2: game, 3: market, 4: confirm
@@ -458,6 +468,93 @@ export default function App() {
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  // Get mentionable users (analysts + recent commenters)
+  const getMentionSuggestions = (query) => {
+    const q = query.toLowerCase();
+    return ANALYSTS
+      .filter(a => a.username.toLowerCase().includes(q) || a.displayName.toLowerCase().includes(q))
+      .slice(0, 5);
+  };
+
+  // Handle mention input in comment
+  const handleCommentChange = (value, setter) => {
+    setter(value);
+    const lastAtIndex = value.lastIndexOf('@');
+    if (lastAtIndex !== -1) {
+      const afterAt = value.slice(lastAtIndex + 1);
+      if (!afterAt.includes(' ') && afterAt.length > 0) {
+        setMentionQuery(afterAt);
+        setShowMentions(true);
+        setMentionIndex(0);
+      } else if (afterAt.length === 0) {
+        setMentionQuery("");
+        setShowMentions(true);
+        setMentionIndex(0);
+      } else {
+        setShowMentions(false);
+      }
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  // Insert mention into comment
+  const insertMention = (username, currentValue, setter) => {
+    const lastAtIndex = currentValue.lastIndexOf('@');
+    const newValue = currentValue.slice(0, lastAtIndex) + '@' + username + ' ';
+    setter(newValue);
+    setShowMentions(false);
+    setMentionQuery("");
+  };
+
+  // Render text with @mentions highlighted
+  const renderWithMentions = (text) => {
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('@')) {
+        const username = part.slice(1);
+        const analyst = ANALYSTS.find(a => a.username.toLowerCase() === username.toLowerCase());
+        if (analyst) {
+          return (
+            <button
+              key={i}
+              onClick={() => openAnalystProfile(analyst)}
+              className="text-accent hover:underline font-medium"
+            >
+              {part}
+            </button>
+          );
+        }
+      }
+      return part;
+    });
+  };
+
+  // Filter and sort analysts for discover page
+  const getFilteredAnalysts = () => {
+    let filtered = [...ANALYSTS];
+    
+    // Filter by specialty
+    if (discoverFilter !== "all") {
+      filtered = filtered.filter(a => 
+        a.specialties.some(s => s.toLowerCase() === discoverFilter.toLowerCase())
+      );
+    }
+    
+    // Sort
+    filtered.sort((a, b) => {
+      switch (discoverSort) {
+        case "winRate": return b.stats.winRate - a.stats.winRate;
+        case "roi": return b.stats.roi - a.stats.roi;
+        case "followers": return b.stats.followers - a.stats.followers;
+        case "streak": return b.stats.currentStreak - a.stats.currentStreak;
+        default: return 0;
+      }
+    });
+    
+    return filtered;
+  };
 
   // Auto-search when team or player changes
   useEffect(() => {
@@ -1424,7 +1521,12 @@ export default function App() {
             <div className="rounded-2xl border border-border bg-surface p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display text-sm font-bold text-text-primary">Top Analysts</h3>
-                <span className="text-xs text-accent cursor-pointer hover:underline">View all</span>
+                <button 
+                  onClick={() => setShowDiscover(true)}
+                  className="text-xs text-accent hover:underline"
+                >
+                  Discover →
+                </button>
               </div>
               <div className="space-y-3">
                 {getTopAnalysts("winRate", 4).map((analyst) => (
@@ -1759,6 +1861,128 @@ export default function App() {
         )}
       </Modal>
 
+      {/* Discover Analysts Modal */}
+      <Modal open={showDiscover} onClose={() => setShowDiscover(false)}>
+        <div className="space-y-5">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-text-primary">Discover Analysts</h2>
+            <button onClick={() => setShowDiscover(false)} className="text-xl text-text-muted hover:text-text-primary">×</button>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-3">
+            {/* Specialty Filter */}
+            <div className="flex gap-1 rounded-lg bg-ink p-1">
+              {["all", "NFL", "NBA", "NHL", "MLB"].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setDiscoverFilter(filter)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                    discoverFilter === filter
+                      ? "bg-accent text-ink"
+                      : "text-text-muted hover:text-text-primary"
+                  }`}
+                >
+                  {filter === "all" ? "All" : filter}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort */}
+            <select
+              value={discoverSort}
+              onChange={(e) => setDiscoverSort(e.target.value)}
+              className="input py-1.5 text-xs"
+            >
+              <option value="winRate">Win Rate</option>
+              <option value="roi">ROI</option>
+              <option value="followers">Followers</option>
+              <option value="streak">Hot Streak</option>
+            </select>
+          </div>
+
+          {/* Rising Stars */}
+          {discoverFilter === "all" && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-accent mb-3">🚀 Rising Stars</h3>
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {ANALYSTS.filter(a => a.stats.followers < 1000 && a.stats.winRate > 50).slice(0, 3).map((analyst) => (
+                  <button
+                    key={analyst.id}
+                    onClick={() => { setShowDiscover(false); openAnalystProfile(analyst); }}
+                    className="shrink-0 w-40 rounded-xl bg-ink p-3 hover:bg-surface-elevated transition-colors text-left"
+                  >
+                    <img src={analyst.avatar} alt="" className="w-10 h-10 rounded-full mx-auto mb-2" />
+                    <p className="text-sm font-medium text-text-primary text-center truncate">{analyst.displayName}</p>
+                    <div className="flex justify-center gap-2 mt-1 text-xs">
+                      <span className="text-success">{formatWinRate(analyst.stats.winRate)}</span>
+                      <span className="text-text-muted">{formatFollowers(analyst.stats.followers)}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Analysts Grid */}
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">
+              {discoverFilter === "all" ? "All Analysts" : `${discoverFilter} Specialists`} ({getFilteredAnalysts().length})
+            </h3>
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {getFilteredAnalysts().map((analyst) => (
+                <button
+                  key={analyst.id}
+                  onClick={() => { setShowDiscover(false); openAnalystProfile(analyst); }}
+                  className="w-full flex items-center gap-3 rounded-xl bg-ink p-3 hover:bg-surface-elevated transition-colors text-left"
+                >
+                  <img src={analyst.avatar} alt="" className="w-12 h-12 rounded-full" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-text-primary">{analyst.displayName}</span>
+                      {analyst.isVerified && <span className="text-accent text-xs">✓</span>}
+                      {analyst.stats.currentStreak >= 3 && (
+                        <span className="rounded bg-accent/20 px-1.5 py-0.5 text-[10px] font-bold text-accent">
+                          {formatStreak(analyst.stats.currentStreak)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {analyst.specialties.slice(0, 3).map((spec) => {
+                        const colors = SPECIALTY_COLORS[spec] || { bg: "bg-gray-500/20", text: "text-gray-400" };
+                        return (
+                          <span key={spec} className={`rounded px-1.5 py-0.5 text-[10px] ${colors.bg} ${colors.text}`}>
+                            {spec}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-success">{formatWinRate(analyst.stats.winRate)}</div>
+                    <div className="text-xs text-text-muted">{formatROI(analyst.stats.roi)} ROI</div>
+                    <div className="text-xs text-text-muted">{formatFollowers(analyst.stats.followers)} followers</div>
+                  </div>
+                  {!isFollowing(analyst.id) ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleFollow(analyst.id); }}
+                      className="shrink-0 btn btn-primary text-xs py-1.5 px-3"
+                    >
+                      Follow
+                    </button>
+                  ) : (
+                    <span className="shrink-0 rounded-md bg-success/10 px-2 py-1 text-xs font-medium text-success">
+                      Following
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Modal>
+
       {/* Pick Detail Modal */}
       <Modal open={pickModalOpen} onClose={() => { setPickModalOpen(false); setReplyingTo(null); }}>
         {selectedPick && (
@@ -1824,18 +2048,60 @@ export default function App() {
                 Discussion ({getPickComments().length})
               </h4>
 
-              {/* Comment Input */}
+              {/* Comment Input with Mentions */}
               {isFollowing(selectedPick.analyst?.id) ? (
-                <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                    placeholder="Add a comment..."
-                    className="input flex-1"
-                  />
-                  <button onClick={handleAddComment} className="btn btn-primary">Post</button>
+                <div className="relative mb-4">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={newComment}
+                        onChange={(e) => handleCommentChange(e.target.value, setNewComment)}
+                        onKeyDown={(e) => {
+                          if (showMentions && getMentionSuggestions(mentionQuery).length > 0) {
+                            if (e.key === 'ArrowDown') {
+                              e.preventDefault();
+                              setMentionIndex(i => Math.min(i + 1, getMentionSuggestions(mentionQuery).length - 1));
+                            } else if (e.key === 'ArrowUp') {
+                              e.preventDefault();
+                              setMentionIndex(i => Math.max(i - 1, 0));
+                            } else if (e.key === 'Enter' || e.key === 'Tab') {
+                              e.preventDefault();
+                              insertMention(getMentionSuggestions(mentionQuery)[mentionIndex].username, newComment, setNewComment);
+                            } else if (e.key === 'Escape') {
+                              setShowMentions(false);
+                            }
+                          } else if (e.key === 'Enter') {
+                            handleAddComment();
+                          }
+                        }}
+                        placeholder="Add a comment... Use @ to mention"
+                        className="input w-full"
+                      />
+                      {/* Mentions Autocomplete */}
+                      {showMentions && getMentionSuggestions(mentionQuery).length > 0 && (
+                        <div className="absolute bottom-full left-0 w-full mb-1 rounded-lg border border-border bg-surface shadow-xl z-10 animate-fade-in">
+                          {getMentionSuggestions(mentionQuery).map((analyst, idx) => (
+                            <button
+                              key={analyst.id}
+                              onClick={() => insertMention(analyst.username, newComment, setNewComment)}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-elevated transition-colors ${
+                                idx === mentionIndex ? 'bg-surface-elevated' : ''
+                              }`}
+                            >
+                              <img src={analyst.avatar} alt="" className="w-6 h-6 rounded-full" />
+                              <div>
+                                <span className="text-sm font-medium text-text-primary">{analyst.displayName}</span>
+                                <span className="text-xs text-text-muted ml-1">@{analyst.username}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={handleAddComment} className="btn btn-primary">Post</button>
+                  </div>
+                  <p className="text-xs text-text-muted mt-1">Tip: Use @ to mention analysts</p>
                 </div>
               ) : (
                 <div className="rounded-lg bg-ink border border-border p-3 mb-4 text-center">
@@ -1877,7 +2143,7 @@ export default function App() {
                           ▲ {comment.upvotes}
                         </button>
                       </div>
-                      <p className="text-sm text-text-secondary mt-2">{comment.content}</p>
+                      <p className="text-sm text-text-secondary mt-2">{renderWithMentions(comment.content)}</p>
                       
                       {/* Reply Button */}
                       <button
@@ -1908,7 +2174,7 @@ export default function App() {
                                   ▲ {reply.upvotes}
                                 </button>
                               </div>
-                              <p className="text-xs text-text-secondary mt-1">{reply.content}</p>
+                              <p className="text-xs text-text-secondary mt-1">{renderWithMentions(reply.content)}</p>
                             </div>
                           ))}
                         </div>
