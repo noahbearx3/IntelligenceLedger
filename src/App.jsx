@@ -268,11 +268,12 @@ const teams = ["Buffalo Bills", "Miami Dolphins", "Kansas City Chiefs", "Philade
 export default function App() {
   const [activeTab, setActiveTab] = useState("team");
   const [selectedTeam, setSelectedTeam] = useState(teams[0]);
-  const [newsSearchQuery, setNewsSearchQuery] = useState("");
-  const [newsSearchActive, setNewsSearchActive] = useState(false);
+  const [newsSearchQuery, setNewsSearchQuery] = useState(teams[0]);
+  const [newsSearchActive, setNewsSearchActive] = useState(true);
   const [newsResults, setNewsResults] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsError, setNewsError] = useState(null);
+  const [aiSummary, setAiSummary] = useState("");
   const [tidbits, setTidbits] = useState(initialTidbits);
   const [tidbitInput, setTidbitInput] = useState("");
   const [vault, setVault] = useState(25);
@@ -294,6 +295,13 @@ export default function App() {
     }, 6000);
     return () => clearInterval(id);
   }, []);
+
+  // Auto-search when team changes
+  useEffect(() => {
+    if (selectedTeam) {
+      performNewsSearch(selectedTeam);
+    }
+  }, [selectedTeam]);
 
   const handleAddTidbit = () => {
     const value = tidbitInput.trim();
@@ -326,15 +334,44 @@ export default function App() {
     }
   };
 
-  const handleNewsSearch = () => {
-    const query = newsSearchQuery.trim();
+  // Generate mock AI summary based on articles
+  const generateAiSummary = (articles, teamName) => {
+    if (articles.length === 0) return "";
+    
+    const injuryArticles = articles.filter(a => 
+      a.headline.toLowerCase().includes("injury") || 
+      a.headline.toLowerCase().includes("questionable") ||
+      a.snippet.toLowerCase().includes("injury")
+    );
+    const performanceArticles = articles.filter(a => 
+      a.headline.toLowerCase().includes("win") || 
+      a.headline.toLowerCase().includes("victory") ||
+      a.headline.toLowerCase().includes("td")
+    );
+    
+    let summary = `📊 **${teamName} Intelligence Brief**\n\n`;
+    
+    if (injuryArticles.length > 0) {
+      summary += `⚠️ **Injury Watch:** ${injuryArticles.length} injury-related update(s). `;
+    }
+    if (performanceArticles.length > 0) {
+      summary += `📈 **Performance:** Recent positive momentum noted. `;
+    }
+    summary += `\n\n📰 Found ${articles.length} relevant article(s) from the last 48 hours.`;
+    
+    return summary;
+  };
+
+  const performNewsSearch = (query) => {
     if (!query) return;
 
+    setNewsSearchQuery(query);
     setNewsSearchActive(true);
     setNewsLoading(true);
     setNewsError(null);
+    setAiSummary("");
 
-    // Simulate 300ms API delay
+    // Simulate API delay (would be real web search + AI in production)
     setTimeout(() => {
       try {
         const searchLower = query.toLowerCase();
@@ -347,15 +384,26 @@ export default function App() {
             );
             return inHeadline || inSnippet || inTeams;
           })
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Newest first
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
         setNewsResults(filtered);
+        
+        // Generate AI summary
+        const summary = generateAiSummary(filtered, query);
+        setAiSummary(summary);
+        
         setNewsLoading(false);
       } catch (err) {
         setNewsError("Unable to load news. Please try again.");
         setNewsLoading(false);
       }
-    }, 300);
+    }, 500); // Slightly longer delay to simulate AI processing
+  };
+
+  const handleNewsSearch = () => {
+    const query = newsSearchQuery.trim();
+    if (!query) return;
+    performNewsSearch(query);
   };
 
   return (
@@ -439,10 +487,7 @@ export default function App() {
                   value={selectedTeam}
                   onChange={(e) => {
                     setSelectedTeam(e.target.value);
-                    setNewsSearchActive(false);
-                    setNewsSearchQuery("");
-                    setNewsResults([]);
-                    setNewsError(null);
+                    // useEffect will auto-trigger search
                   }}
                 >
                   {teams.map((team) => (
@@ -487,16 +532,21 @@ export default function App() {
               </button>
             </div>
 
-            {/* News Results Section */}
+            {/* News Intelligence Section */}
             {newsSearchActive && (
               <div className="rounded-xl border border-border bg-card p-5">
-                <h3 className="text-base font-semibold mb-4">News Results</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold">
+                    🔍 Intelligence Feed: {selectedTeam}
+                  </h3>
+                  <span className="text-xs text-muted">Auto-updating</span>
+                </div>
 
                 {/* Loading State */}
                 {newsLoading && (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-                    <span className="ml-3 text-sm text-muted">Searching...</span>
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                    <span className="mt-3 text-sm text-muted">Scanning sources & generating insights...</span>
                   </div>
                 )}
 
@@ -515,43 +565,59 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Results List */}
+                {/* AI Summary + Results */}
                 {!newsLoading && !newsError && newsResults.length > 0 && (
-                  <div className="space-y-3">
-                    {newsResults.map((article) => (
-                      <article
-                        key={article.id}
-                        className="rounded-lg border border-border bg-ink p-4 hover:border-accent/50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <a
-                            href={article.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-semibold text-sm hover:text-accent transition-colors"
-                          >
-                            {article.headline}
-                          </a>
-                          <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                              sourceColors[article.source] || "bg-slate-500/20 text-slate-400"
-                            }`}
-                          >
-                            {article.source}
-                          </span>
+                  <div className="space-y-4">
+                    {/* AI Summary Card */}
+                    {aiSummary && (
+                      <div className="rounded-lg bg-gradient-to-r from-accent/10 to-accent-2/10 border border-accent/30 p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-semibold text-accent">AI SUMMARY</span>
+                          <span className="text-xs text-muted">• Beta</span>
                         </div>
-                        <p className="mt-2 text-xs text-slate-400 line-clamp-2">
-                          {article.snippet.length > 150
-                            ? article.snippet.slice(0, 150) + "..."
-                            : article.snippet}
+                        <p className="text-sm text-slate-300 whitespace-pre-line">
+                          {aiSummary}
                         </p>
-                        <div className="mt-2 flex items-center gap-2 text-xs text-muted">
-                          <span>{formatRelativeTime(article.timestamp)}</span>
-                          <span>•</span>
-                          <span>{article.relatedTeams.join(", ")}</span>
-                        </div>
-                      </article>
-                    ))}
+                      </div>
+                    )}
+
+                    {/* Results List */}
+                    <div className="space-y-3">
+                      {newsResults.map((article) => (
+                        <article
+                          key={article.id}
+                          className="rounded-lg border border-border bg-ink p-4 hover:border-accent/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <a
+                              href={article.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold text-sm hover:text-accent transition-colors"
+                            >
+                              {article.headline}
+                            </a>
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                                sourceColors[article.source] || "bg-slate-500/20 text-slate-400"
+                              }`}
+                            >
+                              {article.source}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-xs text-slate-400 line-clamp-2">
+                            {article.snippet.length > 150
+                              ? article.snippet.slice(0, 150) + "..."
+                              : article.snippet}
+                          </p>
+                          <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+                            <span>{formatRelativeTime(article.timestamp)}</span>
+                            <span>•</span>
+                            <span>{article.relatedTeams.join(", ")}</span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
