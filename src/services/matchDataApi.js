@@ -13,6 +13,31 @@ const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
 // Check if API is configured
 export const hasApiKey = !!API_KEY;
 
+// ==================== CACHING LAYER ====================
+// Cache API responses for 10 minutes to minimize requests
+const cache = new Map();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function getCached(key) {
+  const item = cache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.timestamp > CACHE_TTL) {
+    cache.delete(key);
+    return null;
+  }
+  return item.data;
+}
+
+function setCache(key, data) {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+// Track API usage for debugging
+let apiCallsThisSession = 0;
+export function getApiCallCount() {
+  return apiCallsThisSession;
+}
+
 // Team ID mappings for API-Football
 export const TEAM_IDS = {
   // Premier League
@@ -69,7 +94,7 @@ export const LEAGUE_IDS = {
 };
 
 /**
- * Make API request with proper headers
+ * Make API request with proper headers + caching
  */
 async function apiRequest(endpoint) {
   if (!API_KEY) {
@@ -77,7 +102,16 @@ async function apiRequest(endpoint) {
     return null;
   }
 
+  // Check cache first
+  const cached = getCached(endpoint);
+  if (cached) {
+    console.log(`📦 Cache hit: ${endpoint}`);
+    return cached;
+  }
+
   try {
+    console.log(`🌐 API call #${++apiCallsThisSession}: ${endpoint}`);
+    
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "GET",
       headers: {
@@ -92,6 +126,10 @@ async function apiRequest(endpoint) {
     }
 
     const data = await response.json();
+    
+    // Cache the response
+    setCache(endpoint, data.response);
+    
     return data.response;
   } catch (error) {
     console.error("API-Football fetch error:", error);

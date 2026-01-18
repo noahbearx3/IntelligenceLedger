@@ -8,6 +8,7 @@ import {
   getStandings,
   hasApiKey,
   TEAM_IDS,
+  getApiCallCount,
 } from "../services/matchDataApi";
 
 /**
@@ -114,9 +115,13 @@ export default function MatchIntelSection({ teamName, league }) {
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center gap-2">
           <span className="text-accent">⚽</span> Match Intel
-          {!hasApiKey && (
+          {!hasApiKey ? (
             <span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded">
               Demo Data
+            </span>
+          ) : (
+            <span className="text-[10px] bg-success/20 text-success px-1.5 py-0.5 rounded" title="API calls cached for 10 min">
+              Live • {getApiCallCount()} calls
             </span>
           )}
         </h3>
