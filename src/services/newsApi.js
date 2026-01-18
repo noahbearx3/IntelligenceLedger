@@ -1,8 +1,8 @@
 const SERPER_KEY = import.meta.env.VITE_SERPER_KEY;
-const OPENAI_KEY = import.meta.env.VITE_OPENAI_KEY;
 
 // Serper works everywhere (no localhost restriction like NewsAPI)
-export const canUseRealApi = !!(SERPER_KEY && OPENAI_KEY);
+// OpenAI is called via serverless function to avoid CORS
+export const canUseRealApi = !!SERPER_KEY;
 
 /**
  * Detect source type from URL or title
@@ -82,59 +82,26 @@ export async function generateAiSummary(articles, teamName) {
     return "📭 No articles found to summarize.";
   }
 
-  // Check if OpenAI key is available
-  if (!OPENAI_KEY) {
-    console.warn("OpenAI API key not configured");
-    return `📰 Found ${articles.length} articles about ${teamName}. Configure OpenAI for AI summaries.`;
-  }
-
-  // Prepare article summaries for the prompt
-  const articleSummaries = articles
-    .slice(0, 5) // Only use top 5 articles
-    .map((a, i) => `${i + 1}. ${a.headline}: ${a.snippet}`)
-    .join("\n");
-
-  const prompt = `You are a sports betting intelligence analyst. Analyze these recent articles about "${teamName}" and provide a brief intelligence summary for a sports bettor.
-
-Sources:
-${articleSummaries}
-
-Provide a concise summary (2-3 sentences) highlighting:
-- Key injury updates or player status
-- Community sentiment and trends  
-- Factors that could impact betting
-
-Use emojis for quick scanning. Be direct and actionable.`;
-
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Use our serverless function to avoid CORS issues with OpenAI
+    const response = await fetch("/api/summary", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a sports betting intelligence analyst. Be concise, use emojis, focus on actionable insights for bettors."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        max_tokens: 200,
-        temperature: 0.7,
+        articles: articles.slice(0, 5).map(a => ({
+          headline: a.headline,
+          snippet: a.snippet
+        })),
+        teamName
       }),
     });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      console.error("OpenAI API error:", response.status, error);
+      console.error("AI Summary API error:", response.status, error);
       
-      // Return a helpful fallback based on error type
       if (response.status === 401) {
         return `🔑 API key issue. Found ${articles.length} articles about ${teamName}.`;
       } else if (response.status === 429) {
@@ -142,13 +109,13 @@ Use emojis for quick scanning. Be direct and actionable.`;
       } else if (response.status === 402 || response.status === 403) {
         return `💳 Quota exceeded. Found ${articles.length} articles about ${teamName}.`;
       }
-      return `⚠️ AI unavailable. Found ${articles.length} articles about ${teamName}.`;
+      return `⚠️ AI unavailable (${error.error || 'unknown'}). Found ${articles.length} articles.`;
     }
 
     const data = await response.json();
-    return data.choices[0]?.message?.content || `📰 Found ${articles.length} articles about ${teamName}.`;
+    return data.summary || `📰 Found ${articles.length} articles about ${teamName}.`;
   } catch (err) {
-    console.error("OpenAI fetch error:", err);
+    console.error("AI Summary fetch error:", err);
     return `📡 Connection error. Found ${articles.length} articles about ${teamName}.`;
   }
 }
