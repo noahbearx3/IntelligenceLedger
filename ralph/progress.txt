@@ -17,3 +17,17 @@
   - `handleNewsSearch` function ready for US-003 to add actual filtering
   - Entity dropdown now controlled with value/onChange
 ---
+
+## 2026-01-18 - US-002, US-003, US-004
+- **What was implemented:** Mock news data, search results display, loading/empty/error states
+- **Files changed:** src/App.jsx
+- **Learnings for future iterations:**
+  - Mock data structure: { id, headline, snippet, source, url, timestamp, relatedTeams[] }
+  - `sourceColors` object maps source names to Tailwind color classes
+  - `formatRelativeTime` helper converts ISO timestamps to "Xm ago" / "Xh ago" / "Xd ago"
+  - Search filters by headline, snippet, OR relatedTeams (case-insensitive)
+  - Results sorted newest-first with `sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))`
+  - 300ms setTimeout simulates API latency for realistic UX
+  - Loading spinner uses `animate-spin` with border trick
+  - Reset all news state when team selection changes
+---
