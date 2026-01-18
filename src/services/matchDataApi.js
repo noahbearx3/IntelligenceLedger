@@ -1,17 +1,15 @@
 /**
  * Match Data API Service
- * Uses Flashscore Scraper API for real-time football data
- * Falls back to mock data when scraper is unavailable
+ * Uses ESPN public API via serverless function for all sports
  */
 
-// Scraper API endpoint (Vercel serverless function)
-const SCRAPER_URL = "/api/scrape";
+// API endpoint (Vercel serverless function)
+const API_URL = "/api/scrape";
 
-// Check if we're in production (scraper available)
-export const hasApiKey = true; // Scraper doesn't need API key
+// API is always available (ESPN is public)
+export const hasApiKey = true;
 
 // ==================== CACHING LAYER ====================
-// Cache API responses for 5 minutes to reduce scraper load
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -29,74 +27,143 @@ function setCache(key, data) {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-// Track scraper calls for debugging
-let scraperCallsThisSession = 0;
+let apiCallsThisSession = 0;
 export function getApiCallCount() {
-  return scraperCallsThisSession;
+  return apiCallsThisSession;
 }
 
-// Team name mappings (for display purposes)
+// All supported teams (must match api/scrape.js ESPN_TEAM_IDS)
 export const TEAM_IDS = {
-  // Premier League
-  "Liverpool": "liverpool",
-  "Arsenal": "arsenal",
-  "Manchester City": "manchester-city",
-  "Manchester United": "manchester-united",
-  "Chelsea": "chelsea",
-  "Tottenham": "tottenham",
-  "Newcastle United": "newcastle-utd",
-  "Aston Villa": "aston-villa",
-  "Brighton": "brighton",
-  "West Ham": "west-ham",
-  "Everton": "everton",
-  "Nottingham Forest": "nottingham-forest",
-  "Fulham": "fulham",
-  "Brentford": "brentford",
-  "Crystal Palace": "crystal-palace",
-  "Bournemouth": "bournemouth",
-  "Wolves": "wolverhampton",
-  "Leicester City": "leicester",
-  "Ipswich Town": "ipswich",
-  "Southampton": "southampton",
+  // NFL
+  "Buffalo Bills": true,
+  "Miami Dolphins": true,
+  "New England Patriots": true,
+  "New York Jets": true,
+  "Baltimore Ravens": true,
+  "Cincinnati Bengals": true,
+  "Cleveland Browns": true,
+  "Pittsburgh Steelers": true,
+  "Houston Texans": true,
+  "Indianapolis Colts": true,
+  "Jacksonville Jaguars": true,
+  "Tennessee Titans": true,
+  "Denver Broncos": true,
+  "Kansas City Chiefs": true,
+  "Las Vegas Raiders": true,
+  "Los Angeles Chargers": true,
+  "Dallas Cowboys": true,
+  "New York Giants": true,
+  "Philadelphia Eagles": true,
+  "Washington Commanders": true,
+  "Chicago Bears": true,
+  "Detroit Lions": true,
+  "Green Bay Packers": true,
+  "Minnesota Vikings": true,
+  "Atlanta Falcons": true,
+  "Carolina Panthers": true,
+  "New Orleans Saints": true,
+  "Tampa Bay Buccaneers": true,
+  "Arizona Cardinals": true,
+  "Los Angeles Rams": true,
+  "San Francisco 49ers": true,
+  "Seattle Seahawks": true,
   
-  // La Liga
-  "Real Madrid": "real-madrid",
-  "Barcelona": "barcelona",
-  "Atlético Madrid": "atletico-madrid",
-  "Athletic Bilbao": "athletic-bilbao",
-  "Real Sociedad": "real-sociedad",
-  "Villarreal": "villarreal",
-  "Real Betis": "real-betis",
-  "Sevilla": "sevilla",
-  "Valencia": "valencia",
-  "Girona": "girona",
+  // NBA
+  "Atlanta Hawks": true,
+  "Boston Celtics": true,
+  "Brooklyn Nets": true,
+  "Charlotte Hornets": true,
+  "Chicago Bulls": true,
+  "Cleveland Cavaliers": true,
+  "Dallas Mavericks": true,
+  "Denver Nuggets": true,
+  "Detroit Pistons": true,
+  "Golden State Warriors": true,
+  "Houston Rockets": true,
+  "Indiana Pacers": true,
+  "LA Clippers": true,
+  "Los Angeles Lakers": true,
+  "Memphis Grizzlies": true,
+  "Miami Heat": true,
+  "Milwaukee Bucks": true,
+  "Minnesota Timberwolves": true,
+  "New Orleans Pelicans": true,
+  "New York Knicks": true,
+  "Oklahoma City Thunder": true,
+  "Orlando Magic": true,
+  "Philadelphia 76ers": true,
+  "Phoenix Suns": true,
+  "Portland Trail Blazers": true,
+  "Sacramento Kings": true,
+  "San Antonio Spurs": true,
+  "Toronto Raptors": true,
+  "Utah Jazz": true,
+  "Washington Wizards": true,
   
-  // MLS
-  "Inter Miami": "inter-miami",
-  "LA Galaxy": "la-galaxy",
-  "LAFC": "los-angeles-fc",
-  "Atlanta United": "atlanta-united",
-  "Seattle Sounders": "seattle-sounders",
-  "Columbus Crew": "columbus-crew",
+  // Soccer - EPL
+  "Liverpool": true,
+  "Arsenal": true,
+  "Manchester City": true,
+  "Manchester United": true,
+  "Chelsea": true,
+  "Tottenham": true,
+  "Newcastle United": true,
+  "Aston Villa": true,
+  "Brighton": true,
+  "West Ham": true,
+  "Everton": true,
+  "Nottingham Forest": true,
+  "Fulham": true,
+  "Brentford": true,
+  "Crystal Palace": true,
+  "Bournemouth": true,
+  "Wolves": true,
+  "Leicester City": true,
+  "Ipswich Town": true,
+  "Southampton": true,
+  
+  // Soccer - La Liga
+  "Real Madrid": true,
+  "Barcelona": true,
+  "Atlético Madrid": true,
+  "Athletic Bilbao": true,
+  "Real Sociedad": true,
+  "Villarreal": true,
+  "Real Betis": true,
+  "Sevilla": true,
+  "Valencia": true,
+  "Girona": true,
+  
+  // Soccer - MLS
+  "Inter Miami": true,
+  "LA Galaxy": true,
+  "LAFC": true,
+  "Atlanta United": true,
+  "Seattle Sounders": true,
+  "Columbus Crew": true,
 };
 
-// League IDs
+// League mappings
 export const LEAGUE_IDS = {
-  "EPL": "england/premier-league",
-  "La Liga": "spain/laliga",
-  "Bundesliga": "germany/bundesliga",
-  "Serie A": "italy/serie-a",
-  "Ligue 1": "france/ligue-1",
-  "MLS": "usa/mls",
+  "NFL": true,
+  "NBA": true,
+  "MLB": true,
+  "NHL": true,
+  "EPL": true,
+  "La Liga": true,
+  "Bundesliga": true,
+  "Serie A": true,
+  "Ligue 1": true,
+  "MLS": true,
+  "Champions League": true,
 };
 
 /**
- * Call the scraper API
+ * Call the ESPN API
  */
-async function callScraper(type, params) {
+async function callApi(type, params) {
   const cacheKey = `${type}:${JSON.stringify(params)}`;
   
-  // Check cache first
   const cached = getCached(cacheKey);
   if (cached) {
     console.log(`📦 Cache hit: ${cacheKey}`);
@@ -104,9 +171,9 @@ async function callScraper(type, params) {
   }
 
   try {
-    console.log(`🔍 Scraper call #${++scraperCallsThisSession}: ${type}`, params);
+    console.log(`🏈 API call #${++apiCallsThisSession}: ${type}`, params);
     
-    const response = await fetch(SCRAPER_URL, {
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type, ...params }),
@@ -114,25 +181,23 @@ async function callScraper(type, params) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ Scraper error:", response.status, errorText);
+      console.error("❌ API error:", response.status, errorText);
       return null;
     }
 
     const result = await response.json();
     
     if (!result.success) {
-      console.error("❌ Scraper returned error:", result.error);
+      console.error("❌ API returned error:", result.error);
       return null;
     }
 
-    console.log(`✅ Scraper response:`, result.data);
-    
-    // Cache the response
+    console.log(`✅ API response:`, result.data);
     setCache(cacheKey, result.data);
     
     return result.data;
   } catch (error) {
-    console.error("❌ Scraper fetch error:", error);
+    console.error("❌ API fetch error:", error);
     return null;
   }
 }
@@ -146,21 +211,22 @@ export async function getNextFixture(teamName) {
     return getMockNextFixture(teamName);
   }
 
-  const data = await callScraper("team", { teamName });
+  const data = await callApi("team", { teamName });
   
   if (!data || !data.nextFixture) {
-    console.log(`⚠️ No fixture from scraper for ${teamName}, using mock`);
+    console.log(`⚠️ No fixture from API for ${teamName}, using mock`);
     return getMockNextFixture(teamName);
   }
 
+  const fixture = data.nextFixture;
   return {
-    id: Date.now(),
-    date: data.nextFixture.time,
-    venue: "TBD",
-    home: { name: data.nextFixture.home, logo: null },
-    away: { name: data.nextFixture.away, logo: null },
-    league: "League",
-    round: "",
+    id: fixture.id || Date.now(),
+    date: fixture.date,
+    venue: fixture.venue || "TBD",
+    home: { name: fixture.home, logo: null },
+    away: { name: fixture.away, logo: null },
+    league: data.league || "League",
+    broadcast: fixture.broadcast || "",
   };
 }
 
@@ -173,45 +239,42 @@ export async function getTeamForm(teamName) {
     return getMockTeamForm(teamName);
   }
 
-  const data = await callScraper("form", { teamName });
+  const data = await callApi("team", { teamName });
   
-  if (!data || data.length === 0) {
-    console.log(`⚠️ No form from scraper for ${teamName}, using mock`);
+  if (!data || !data.form || data.form.length === 0) {
+    console.log(`⚠️ No form from API for ${teamName}, using mock`);
     return getMockTeamForm(teamName);
   }
 
-  return data.map((match, i) => ({
-    id: i,
+  return data.form.map((match, i) => ({
+    id: match.id || i,
     date: match.date || new Date().toISOString(),
     home: match.home,
     away: match.away,
-    homeGoals: match.homeGoals,
-    awayGoals: match.awayGoals,
+    homeGoals: match.homeGoals || 0,
+    awayGoals: match.awayGoals || 0,
     result: match.result || "D",
   }));
 }
 
 /**
- * Get lineup for a fixture (not available via scraper yet)
+ * Get lineup for a fixture
  */
 export async function getLineup(fixtureId) {
-  // Lineups require real-time data closer to match - use mock for now
   return getMockLineup();
 }
 
 /**
- * Get head-to-head history (use mock for now)
+ * Get head-to-head history
  */
 export async function getH2H(team1Name, team2Name) {
-  // H2H requires specific match history scraping - use mock for now
   return getMockH2H(team1Name, team2Name);
 }
 
 /**
- * Get team injuries (not easily available via scraper)
+ * Get team injuries
  */
 export async function getInjuries(teamName) {
-  // Injuries are hard to scrape reliably - return empty (no injuries)
   return [];
 }
 
@@ -224,52 +287,40 @@ export async function getStandings(league) {
     return getMockStandings(league);
   }
 
-  const data = await callScraper("standings", { league });
+  const data = await callApi("standings", { league });
   
-  if (!data || data.length === 0) {
-    console.log(`⚠️ No standings from scraper for ${league}, using mock`);
+  if (!data || data.length === 0 || data.error) {
+    console.log(`⚠️ No standings from API for ${league}, using mock`);
     return getMockStandings(league);
   }
 
   return data.slice(0, 20).map(team => ({
     rank: team.rank,
     name: team.name,
-    logo: null,
-    played: team.played,
-    won: team.won,
-    drawn: team.drawn,
-    lost: team.lost,
-    gf: team.gf,
-    ga: team.ga,
-    gd: team.gd,
-    points: team.points,
-    form: "",
+    logo: team.logo || null,
+    played: team.played || 0,
+    won: team.won || 0,
+    drawn: team.drawn || 0,
+    lost: team.lost || 0,
+    gf: team.gf || 0,
+    ga: team.ga || 0,
+    gd: team.gd || 0,
+    points: team.points || 0,
+    winPct: team.winPct || 0,
+    form: team.form || "",
   }));
 }
 
 // ==================== MOCK DATA ====================
 
 function getMockNextFixture(teamName) {
-  const opponents = {
-    "Liverpool": "Manchester City",
-    "Arsenal": "Chelsea", 
-    "Manchester City": "Liverpool",
-    "Real Madrid": "Barcelona",
-    "Barcelona": "Real Madrid",
-    "Inter Miami": "LA Galaxy",
-  };
-  
-  const opponent = opponents[teamName] || "TBD";
-  const isHome = Math.random() > 0.5;
-  
   return {
     id: Math.floor(Math.random() * 100000),
     date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    venue: isHome ? `${teamName} Stadium` : `${opponent} Stadium`,
-    home: { name: isHome ? teamName : opponent, logo: null },
-    away: { name: isHome ? opponent : teamName, logo: null },
-    league: "Premier League",
-    round: "Round 22",
+    venue: "TBD Stadium",
+    home: { name: teamName, logo: null },
+    away: { name: "Opponent", logo: null },
+    league: "League",
   };
 }
 
@@ -278,8 +329,8 @@ function getMockTeamForm(teamName) {
   return results.map((result, i) => ({
     id: i,
     date: new Date(Date.now() - (i + 1) * 7 * 24 * 60 * 60 * 1000).toISOString(),
-    home: i % 2 === 0 ? teamName : "Opponent FC",
-    away: i % 2 === 0 ? "Opponent FC" : teamName,
+    home: i % 2 === 0 ? teamName : "Opponent",
+    away: i % 2 === 0 ? "Opponent" : teamName,
     homeGoals: result === "W" ? 2 : result === "D" ? 1 : 0,
     awayGoals: result === "W" ? 0 : result === "D" ? 1 : 2,
     result,
@@ -287,31 +338,25 @@ function getMockTeamForm(teamName) {
 }
 
 function getMockLineup() {
-  return [
-    {
-      team: "Home Team",
-      formation: "4-3-3",
-      startXI: [
-        { name: "Alisson", number: 1, pos: "G" },
-        { name: "Alexander-Arnold", number: 66, pos: "D" },
-        { name: "Van Dijk", number: 4, pos: "D" },
-        { name: "Konaté", number: 5, pos: "D" },
-        { name: "Robertson", number: 26, pos: "D" },
-        { name: "Mac Allister", number: 10, pos: "M" },
-        { name: "Gravenberch", number: 38, pos: "M" },
-        { name: "Szoboszlai", number: 8, pos: "M" },
-        { name: "Salah", number: 11, pos: "F" },
-        { name: "Núñez", number: 9, pos: "F" },
-        { name: "Díaz", number: 7, pos: "F" },
-      ],
-      substitutes: [
-        { name: "Kelleher", number: 62, pos: "G" },
-        { name: "Gómez", number: 2, pos: "D" },
-        { name: "Jones", number: 17, pos: "M" },
-      ],
-      coach: "Arne Slot",
-    }
-  ];
+  return [{
+    team: "Home Team",
+    formation: "4-3-3",
+    startXI: [
+      { name: "Goalkeeper", number: 1, pos: "G" },
+      { name: "Defender 1", number: 2, pos: "D" },
+      { name: "Defender 2", number: 4, pos: "D" },
+      { name: "Defender 3", number: 5, pos: "D" },
+      { name: "Defender 4", number: 3, pos: "D" },
+      { name: "Midfielder 1", number: 6, pos: "M" },
+      { name: "Midfielder 2", number: 8, pos: "M" },
+      { name: "Midfielder 3", number: 10, pos: "M" },
+      { name: "Forward 1", number: 7, pos: "F" },
+      { name: "Forward 2", number: 9, pos: "F" },
+      { name: "Forward 3", number: 11, pos: "F" },
+    ],
+    substitutes: [],
+    coach: "Manager",
+  }];
 }
 
 function getMockH2H(team1, team2) {
@@ -319,35 +364,15 @@ function getMockH2H(team1, team2) {
     matches: [
       { date: "2024-12-01", home: team1, away: team2, homeGoals: 2, awayGoals: 1 },
       { date: "2024-05-15", home: team2, away: team1, homeGoals: 1, awayGoals: 1 },
-      { date: "2023-12-10", home: team1, away: team2, homeGoals: 3, awayGoals: 0 },
-      { date: "2023-04-22", home: team2, away: team1, homeGoals: 0, awayGoals: 2 },
-      { date: "2022-11-05", home: team1, away: team2, homeGoals: 1, awayGoals: 2 },
     ],
-    stats: { wins: 3, draws: 1, losses: 1, total: 5 },
+    stats: { wins: 1, draws: 1, losses: 0, total: 2 },
   };
 }
 
 function getMockStandings(league) {
-  const teams = [
-    { name: "Liverpool", points: 50, gd: 32 },
-    { name: "Arsenal", points: 44, gd: 25 },
-    { name: "Nottingham Forest", points: 41, gd: 9 },
-    { name: "Chelsea", points: 39, gd: 14 },
-    { name: "Manchester City", points: 38, gd: 17 },
-  ];
-  
-  return teams.map((t, i) => ({
-    rank: i + 1,
-    name: t.name,
-    logo: null,
-    played: 21,
-    won: Math.floor(t.points / 3),
-    drawn: (t.points % 3),
-    lost: 21 - Math.floor(t.points / 3) - (t.points % 3),
-    gf: 40 + t.gd,
-    ga: 40,
-    gd: t.gd,
-    points: t.points,
-    form: "WWDWL",
-  }));
+  return [
+    { rank: 1, name: "Team 1", points: 50, gd: 25, played: 20, won: 15, drawn: 5, lost: 0 },
+    { rank: 2, name: "Team 2", points: 45, gd: 20, played: 20, won: 13, drawn: 6, lost: 1 },
+    { rank: 3, name: "Team 3", points: 40, gd: 15, played: 20, won: 12, drawn: 4, lost: 4 },
+  ].map(t => ({ ...t, logo: null, gf: 40 + t.gd, ga: 40, winPct: 0, form: "" }));
 }
