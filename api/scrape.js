@@ -1,70 +1,67 @@
 /**
- * Flashscore Scraper API
- * Vercel Serverless Function using Playwright
+ * SofaScore Scraper API via Scrape.do
+ * Uses Scrape.do proxy service to bypass anti-bot measures
  * 
  * Endpoints:
- * POST /api/scrape { type: "team", slug: "liverpool" }
- * POST /api/scrape { type: "fixtures", slug: "liverpool" }
- * POST /api/scrape { type: "standings", league: "england/premier-league" }
+ * POST /api/scrape { type: "team", teamName: "Liverpool" }
+ * POST /api/scrape { type: "standings", league: "EPL" }
  */
 
-import chromium from "@sparticuz/chromium";
-import playwright from "playwright-core";
+const SCRAPE_DO_TOKEN = process.env.SCRAPE_DO_TOKEN || "1f427d229fda4c3ca2ef7f12a9d3fc3c8cee402a215";
 
-const BASE_URL = "https://www.flashscore.com";
-
-// Team slug mappings for Flashscore URLs
-const TEAM_SLUGS = {
+// SofaScore team IDs
+const SOFASCORE_TEAM_IDS = {
   // Premier League
-  "Liverpool": "liverpool",
-  "Arsenal": "arsenal",
-  "Manchester City": "manchester-city",
-  "Manchester United": "manchester-united",
-  "Chelsea": "chelsea",
-  "Tottenham": "tottenham",
-  "Newcastle United": "newcastle-utd",
-  "Aston Villa": "aston-villa",
-  "Brighton": "brighton",
-  "West Ham": "west-ham",
-  "Everton": "everton",
-  "Nottingham Forest": "nottingham-forest",
-  "Fulham": "fulham",
-  "Brentford": "brentford",
-  "Crystal Palace": "crystal-palace",
-  "Bournemouth": "bournemouth",
-  "Wolves": "wolverhampton",
-  "Leicester City": "leicester",
-  "Ipswich Town": "ipswich",
-  "Southampton": "southampton",
+  "Liverpool": 44,
+  "Arsenal": 42,
+  "Manchester City": 17,
+  "Manchester United": 35,
+  "Chelsea": 38,
+  "Tottenham": 33,
+  "Newcastle United": 39,
+  "Aston Villa": 40,
+  "Brighton": 30,
+  "West Ham": 37,
+  "Everton": 48,
+  "Nottingham Forest": 14,
+  "Fulham": 43,
+  "Brentford": 50,
+  "Crystal Palace": 7,
+  "Bournemouth": 60,
+  "Wolves": 3,
+  "Leicester City": 31,
+  "Ipswich Town": 32,
+  "Southampton": 45,
   
   // La Liga
-  "Real Madrid": "real-madrid",
-  "Barcelona": "barcelona",
-  "Atlético Madrid": "atletico-madrid",
-  "Athletic Bilbao": "athletic-bilbao",
-  "Real Sociedad": "real-sociedad",
-  "Villarreal": "villarreal",
-  "Real Betis": "real-betis",
-  "Sevilla": "sevilla",
-  "Valencia": "valencia",
-  "Girona": "girona",
+  "Real Madrid": 2829,
+  "Barcelona": 2817,
+  "Atlético Madrid": 2836,
+  "Athletic Bilbao": 2825,
+  "Real Sociedad": 2824,
+  "Villarreal": 2819,
+  "Real Betis": 2816,
+  "Sevilla": 2833,
+  "Valencia": 2828,
+  "Girona": 24264,
   
   // MLS
-  "Inter Miami": "inter-miami",
-  "LA Galaxy": "la-galaxy",
-  "LAFC": "los-angeles-fc",
-  "Atlanta United": "atlanta-united",
-  "Seattle Sounders": "seattle-sounders",
-  "Columbus Crew": "columbus-crew",
+  "Inter Miami": 341422,
+  "LA Galaxy": 7450,
+  "LAFC": 291604,
+  "Atlanta United": 216118,
+  "Seattle Sounders": 7451,
+  "Columbus Crew": 7446,
 };
 
-const LEAGUE_PATHS = {
-  "EPL": "england/premier-league",
-  "La Liga": "spain/laliga",
-  "Bundesliga": "germany/bundesliga",
-  "Serie A": "italy/serie-a",
-  "Ligue 1": "france/ligue-1",
-  "MLS": "usa/mls",
+// SofaScore tournament IDs
+const SOFASCORE_TOURNAMENT_IDS = {
+  "EPL": 17,
+  "La Liga": 8,
+  "Bundesliga": 35,
+  "Serie A": 23,
+  "Ligue 1": 34,
+  "MLS": 242,
 };
 
 export default async function handler(req, res) {
@@ -83,374 +80,217 @@ export default async function handler(req, res) {
 
   const { type, teamName, league } = req.body;
 
-  let browser = null;
-
   try {
-    console.log(`🔍 Scraping: ${type} for ${teamName || league}`);
-
-    // Launch browser with serverless-optimized Chromium
-    console.log("🚀 Launching browser...");
-    
-    browser = await playwright.chromium.launch({
-      args: [...chromium.args, "--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"],
-      executablePath: await chromium.executablePath(),
-      headless: true,
-    });
-
-    console.log("✅ Browser launched");
-
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-      viewport: { width: 1920, height: 1080 },
-      locale: "en-GB",
-      timezoneId: "Europe/London",
-    });
-    
-    // Accept cookies by default
-    await context.addCookies([{
-      name: "euconsent-v2-done",
-      value: "1",
-      domain: ".flashscore.com",
-      path: "/",
-    }]);
-
     let data;
 
     switch (type) {
       case "team":
-        data = await scrapeTeamData(context, teamName);
-        break;
-      case "fixtures":
-        data = await scrapeFixtures(context, teamName);
+        data = await scrapeTeamData(teamName);
         break;
       case "form":
-        data = await scrapeForm(context, teamName);
+        data = await scrapeTeamForm(teamName);
+        break;
+      case "fixtures":
+        data = await scrapeTeamFixtures(teamName);
         break;
       case "standings":
-        data = await scrapeStandings(context, league);
-        break;
-      case "debug":
-        // Debug endpoint - capture page HTML
-        data = await debugPage(context, teamName);
+        data = await scrapeStandings(league);
         break;
       default:
         return res.status(400).json({ error: "Invalid type" });
     }
 
-    await browser.close();
-
-    console.log(`✅ Scraped successfully:`, data);
     return res.status(200).json({ success: true, data });
 
   } catch (error) {
     console.error("❌ Scraper error:", error);
-    if (browser) await browser.close();
     return res.status(500).json({ error: error.message });
   }
 }
 
 /**
- * Scrape team overview (next fixture, form, injuries)
- * Using selectors from working Flashscore scraper
+ * Fetch via Scrape.do proxy
  */
-async function scrapeTeamData(context, teamName) {
-  const slug = TEAM_SLUGS[teamName];
-  if (!slug) throw new Error(`Unknown team: ${teamName}`);
-
-  const page = await context.newPage();
+async function fetchViaScrapeD(url) {
+  const encodedUrl = encodeURIComponent(url);
+  const scrapeUrl = `https://api.scrape.do/?token=${SCRAPE_DO_TOKEN}&url=${encodedUrl}`;
   
-  // Go to team's fixtures page
-  const url = `${BASE_URL}/team/${slug}/fixtures/`;
-  console.log(`📍 Navigating to: ${url}`);
+  console.log(`🔍 Scrape.do request: ${url}`);
   
-  await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(3000); // Wait for dynamic content
-
-  // Debug: Get page content
-  const pageContent = await page.content();
-  console.log(`📄 Page length: ${pageContent.length} chars`);
-
-  const data = await page.evaluate(() => {
-    // Use the working selectors from the Flashscore scraper
-    const MATCH_SELECTOR = ".event__match";
-    
-    // Get all matches on the page
-    const allMatches = Array.from(document.querySelectorAll(MATCH_SELECTOR));
-    console.log(`Found ${allMatches.length} matches on page`);
-    
-    // Find next fixture (scheduled match)
-    let nextFixture = null;
-    const scheduledMatch = allMatches.find(m => !m.querySelector(".event__score--home"));
-    
-    if (scheduledMatch) {
-      const homeEl = scheduledMatch.querySelector("[class*='homeParticipant']") || 
-                     scheduledMatch.querySelector(".event__participant--home");
-      const awayEl = scheduledMatch.querySelector("[class*='awayParticipant']") ||
-                     scheduledMatch.querySelector(".event__participant--away");
-      const timeEl = scheduledMatch.querySelector("[class*='time']") ||
-                     scheduledMatch.querySelector(".event__time");
-      
-      nextFixture = {
-        home: homeEl?.innerText?.trim() || "Home",
-        away: awayEl?.innerText?.trim() || "Away", 
-        time: timeEl?.innerText?.trim() || "TBD",
-      };
-    }
-
-    // Get recent results (matches with scores)
-    const completedMatches = allMatches.filter(m => m.querySelector(".event__score--home"));
-    const form = completedMatches.slice(0, 5).map(match => {
-      const homeEl = match.querySelector("[class*='homeParticipant']") ||
-                     match.querySelector(".event__participant--home");
-      const awayEl = match.querySelector("[class*='awayParticipant']") ||
-                     match.querySelector(".event__participant--away");
-      const homeScoreEl = match.querySelector(".event__score--home");
-      const awayScoreEl = match.querySelector(".event__score--away");
-      const timeEl = match.querySelector("[class*='time']") ||
-                     match.querySelector(".event__time");
-      
-      return {
-        home: homeEl?.innerText?.trim() || "Home",
-        away: awayEl?.innerText?.trim() || "Away",
-        homeGoals: parseInt(homeScoreEl?.innerText) || 0,
-        awayGoals: parseInt(awayScoreEl?.innerText) || 0,
-        date: timeEl?.innerText?.trim() || "",
-      };
-    });
-
-    return { 
-      nextFixture, 
-      form,
-      debug: {
-        totalMatches: allMatches.length,
-        scheduled: scheduledMatch ? true : false,
-        completed: completedMatches.length,
-      }
-    };
+  const response = await fetch(scrapeUrl, {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+    },
   });
 
-  console.log(`📊 Scraped data:`, JSON.stringify(data));
-  await page.close();
-  return data;
-}
-
-/**
- * Scrape upcoming fixtures
- */
-async function scrapeFixtures(context, teamName) {
-  const slug = TEAM_SLUGS[teamName];
-  if (!slug) throw new Error(`Unknown team: ${teamName}`);
-
-  const page = await context.newPage();
-  const url = `${BASE_URL}/team/${slug}/fixtures/`;
-  console.log(`📍 Fixtures URL: ${url}`);
-  
-  await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(3000);
-
-  // Try to dismiss cookie banner if present
-  try {
-    const acceptBtn = await page.$('[id*="accept"], [class*="accept"], button:has-text("Accept")');
-    if (acceptBtn) await acceptBtn.click();
-  } catch (e) {
-    console.log("No cookie banner to dismiss");
+  if (!response.ok) {
+    throw new Error(`Scrape.do error: ${response.status}`);
   }
 
-  const fixtures = await page.evaluate(() => {
-    const matches = Array.from(document.querySelectorAll(".event__match"));
-    console.log(`Found ${matches.length} fixture elements`);
-    
-    return matches.slice(0, 5).map(match => {
-      const homeEl = match.querySelector("[class*='home']");
-      const awayEl = match.querySelector("[class*='away']");
-      const timeEl = match.querySelector("[class*='time']");
-      
-      return { 
-        home: homeEl?.innerText?.trim() || "TBD", 
-        away: awayEl?.innerText?.trim() || "TBD", 
-        time: timeEl?.innerText?.trim() || "TBD",
-      };
-    });
-  });
-
-  await page.close();
-  return fixtures;
+  const text = await response.text();
+  
+  // Try to parse as JSON
+  try {
+    return JSON.parse(text);
+  } catch {
+    // If not JSON, return the text
+    return { html: text };
+  }
 }
 
 /**
- * Scrape recent results (form)
+ * Get team data (next match + recent form)
  */
-async function scrapeForm(context, teamName) {
-  const slug = TEAM_SLUGS[teamName];
-  if (!slug) throw new Error(`Unknown team: ${teamName}`);
+async function scrapeTeamData(teamName) {
+  const teamId = SOFASCORE_TEAM_IDS[teamName];
+  if (!teamId) throw new Error(`Unknown team: ${teamName}`);
 
-  const page = await context.newPage();
-  const url = `${BASE_URL}/team/${slug}/results/`;
-  console.log(`📍 Results URL: ${url}`);
-  
-  await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(3000);
+  // SofaScore API endpoints
+  const nextMatchUrl = `https://api.sofascore.com/api/v1/team/${teamId}/events/next/0`;
+  const lastMatchesUrl = `https://api.sofascore.com/api/v1/team/${teamId}/events/last/0`;
 
-  // Debug: screenshot
-  const pageTitle = await page.title();
-  console.log(`📄 Page title: ${pageTitle}`);
+  const [nextData, lastData] = await Promise.all([
+    fetchViaScrapeD(nextMatchUrl),
+    fetchViaScrapeD(lastMatchesUrl),
+  ]);
 
-  const results = await page.evaluate((teamSlug) => {
-    // Try multiple selectors
-    let matches = Array.from(document.querySelectorAll(".event__match--static"));
-    if (matches.length === 0) {
-      matches = Array.from(document.querySelectorAll(".event__match"));
-    }
-    if (matches.length === 0) {
-      matches = Array.from(document.querySelectorAll("[class*='event'][class*='match']"));
-    }
-    
-    console.log(`Found ${matches.length} result matches`);
-    
-    // Filter to only completed matches (have scores)
-    const completedMatches = matches.filter(m => {
-      const scoreEl = m.querySelector("[class*='score']");
-      return scoreEl && scoreEl.innerText.trim() !== "";
-    });
-    
-    console.log(`Found ${completedMatches.length} completed matches`);
+  // Parse next fixture
+  let nextFixture = null;
+  if (nextData.events && nextData.events.length > 0) {
+    const event = nextData.events[0];
+    nextFixture = {
+      id: event.id,
+      home: event.homeTeam?.name || "Home",
+      away: event.awayTeam?.name || "Away",
+      date: event.startTimestamp ? new Date(event.startTimestamp * 1000).toISOString() : null,
+      tournament: event.tournament?.name || "League",
+      venue: event.venue?.stadium?.name || "TBD",
+    };
+  }
 
-    return completedMatches.slice(0, 5).map(match => {
-      // Try various selector patterns
-      const homeTeam = (
-        match.querySelector(".event__participant--home")?.innerText ||
-        match.querySelector("[class*='homeParticipant']")?.innerText ||
-        match.querySelector("[class*='home'][class*='participant']")?.innerText ||
-        "Home"
-      ).trim();
+  // Parse recent form
+  const form = [];
+  if (lastData.events) {
+    for (const event of lastData.events.slice(0, 5)) {
+      const isHome = event.homeTeam?.id === teamId;
+      const homeScore = event.homeScore?.current ?? 0;
+      const awayScore = event.awayScore?.current ?? 0;
       
-      const awayTeam = (
-        match.querySelector(".event__participant--away")?.innerText ||
-        match.querySelector("[class*='awayParticipant']")?.innerText ||
-        match.querySelector("[class*='away'][class*='participant']")?.innerText ||
-        "Away"
-      ).trim();
-      
-      const homeScore = parseInt(
-        match.querySelector(".event__score--home")?.innerText ||
-        match.querySelector("[class*='score'][class*='home']")?.innerText ||
-        "0"
-      ) || 0;
-      
-      const awayScore = parseInt(
-        match.querySelector(".event__score--away")?.innerText ||
-        match.querySelector("[class*='score'][class*='away']")?.innerText ||
-        "0"
-      ) || 0;
-      
-      const date = (
-        match.querySelector(".event__time")?.innerText ||
-        match.querySelector("[class*='time']")?.innerText ||
-        ""
-      ).trim();
-      
-      // Determine result for the team
-      const teamNameLower = teamSlug.replace(/-/g, " ").toLowerCase();
-      const isHome = homeTeam.toLowerCase().includes(teamNameLower);
       let result;
       if (homeScore === awayScore) result = "D";
       else if (isHome) result = homeScore > awayScore ? "W" : "L";
       else result = awayScore > homeScore ? "W" : "L";
-      
-      return {
-        home: homeTeam,
-        away: awayTeam,
+
+      form.push({
+        id: event.id,
+        home: event.homeTeam?.name || "Home",
+        away: event.awayTeam?.name || "Away",
         homeGoals: homeScore,
         awayGoals: awayScore,
-        date,
+        date: event.startTimestamp ? new Date(event.startTimestamp * 1000).toISOString() : null,
         result,
-      };
-    });
-  }, slug);
-
-  await page.close();
-  return results;
-}
-
-/**
- * Debug function - capture page content
- */
-async function debugPage(context, teamName) {
-  const slug = TEAM_SLUGS[teamName] || "liverpool";
-  const page = await context.newPage();
-  
-  const url = `${BASE_URL}/team/${slug}/`;
-  console.log(`🔍 Debug: Navigating to ${url}`);
-  
-  try {
-    await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
-    await page.waitForTimeout(5000);
-    
-    const title = await page.title();
-    const url_final = page.url();
-    const html = await page.content();
-    
-    // Count various elements
-    const elementCounts = await page.evaluate(() => {
-      return {
-        divs: document.querySelectorAll("div").length,
-        events: document.querySelectorAll("[class*='event']").length,
-        matches: document.querySelectorAll("[class*='match']").length,
-        participants: document.querySelectorAll("[class*='participant']").length,
-        scores: document.querySelectorAll("[class*='score']").length,
-        body_text_preview: document.body?.innerText?.substring(0, 500) || "no body",
-      };
-    });
-    
-    await page.close();
-    
-    return {
-      title,
-      url: url_final,
-      html_length: html.length,
-      html_preview: html.substring(0, 2000),
-      elements: elementCounts,
-    };
-  } catch (error) {
-    await page.close();
-    return { error: error.message };
+      });
+    }
   }
+
+  return { nextFixture, form };
 }
 
 /**
- * Scrape league standings
+ * Get team's recent results
  */
-async function scrapeStandings(context, league) {
-  const leaguePath = LEAGUE_PATHS[league];
-  if (!leaguePath) throw new Error(`Unknown league: ${league}`);
+async function scrapeTeamForm(teamName) {
+  const teamId = SOFASCORE_TEAM_IDS[teamName];
+  if (!teamId) throw new Error(`Unknown team: ${teamName}`);
 
-  const page = await context.newPage();
-  await page.goto(`${BASE_URL}/football/${leaguePath}/standings/`, { waitUntil: "domcontentloaded", timeout: 15000 });
-  await page.waitForTimeout(2000);
+  const url = `https://api.sofascore.com/api/v1/team/${teamId}/events/last/0`;
+  const data = await fetchViaScrapeD(url);
 
-  const standings = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll(".ui-table__row")).slice(0, 20).map(row => {
-      const cells = row.querySelectorAll(".table__cell");
-      const rank = row.querySelector(".tableCellRank")?.innerText.trim();
-      const teamEl = row.querySelector(".tableCellParticipant__name");
-      const name = teamEl?.innerText.trim();
-      
-      // Table columns: Rank, Team, P, W, D, L, Goals, +/-, Pts
-      return {
-        rank: parseInt(rank) || 0,
-        name: name,
-        played: parseInt(cells[2]?.innerText) || 0,
-        won: parseInt(cells[3]?.innerText) || 0,
-        drawn: parseInt(cells[4]?.innerText) || 0,
-        lost: parseInt(cells[5]?.innerText) || 0,
-        gf: parseInt(cells[6]?.innerText?.split(":")[0]) || 0,
-        ga: parseInt(cells[6]?.innerText?.split(":")[1]) || 0,
-        gd: parseInt(cells[7]?.innerText) || 0,
-        points: parseInt(cells[8]?.innerText) || 0,
-      };
-    }).filter(t => t.name);
+  if (!data.events) return [];
+
+  return data.events.slice(0, 5).map(event => {
+    const isHome = event.homeTeam?.id === teamId;
+    const homeScore = event.homeScore?.current ?? 0;
+    const awayScore = event.awayScore?.current ?? 0;
+    
+    let result;
+    if (homeScore === awayScore) result = "D";
+    else if (isHome) result = homeScore > awayScore ? "W" : "L";
+    else result = awayScore > homeScore ? "W" : "L";
+
+    return {
+      id: event.id,
+      home: event.homeTeam?.name || "Home",
+      away: event.awayTeam?.name || "Away",
+      homeGoals: homeScore,
+      awayGoals: awayScore,
+      date: event.startTimestamp ? new Date(event.startTimestamp * 1000).toISOString() : null,
+      result,
+    };
   });
+}
 
-  await page.close();
-  return standings;
+/**
+ * Get team's upcoming fixtures
+ */
+async function scrapeTeamFixtures(teamName) {
+  const teamId = SOFASCORE_TEAM_IDS[teamName];
+  if (!teamId) throw new Error(`Unknown team: ${teamName}`);
+
+  const url = `https://api.sofascore.com/api/v1/team/${teamId}/events/next/0`;
+  const data = await fetchViaScrapeD(url);
+
+  if (!data.events) return [];
+
+  return data.events.slice(0, 5).map(event => ({
+    id: event.id,
+    home: event.homeTeam?.name || "Home",
+    away: event.awayTeam?.name || "Away",
+    date: event.startTimestamp ? new Date(event.startTimestamp * 1000).toISOString() : null,
+    tournament: event.tournament?.name || "League",
+  }));
+}
+
+/**
+ * Get league standings
+ */
+async function scrapeStandings(league) {
+  const tournamentId = SOFASCORE_TOURNAMENT_IDS[league];
+  if (!tournamentId) throw new Error(`Unknown league: ${league}`);
+
+  // Get current season
+  const seasonsUrl = `https://api.sofascore.com/api/v1/unique-tournament/${tournamentId}/seasons`;
+  const seasonsData = await fetchViaScrapeD(seasonsUrl);
+  
+  if (!seasonsData.seasons || seasonsData.seasons.length === 0) {
+    throw new Error("No seasons found");
+  }
+  
+  const currentSeason = seasonsData.seasons[0];
+  
+  // Get standings
+  const standingsUrl = `https://api.sofascore.com/api/v1/unique-tournament/${tournamentId}/season/${currentSeason.id}/standings/total`;
+  const standingsData = await fetchViaScrapeD(standingsUrl);
+
+  if (!standingsData.standings || standingsData.standings.length === 0) {
+    return [];
+  }
+
+  const rows = standingsData.standings[0]?.rows || [];
+  
+  return rows.slice(0, 20).map(row => ({
+    rank: row.position,
+    name: row.team?.name || "Unknown",
+    logo: row.team?.id ? `https://api.sofascore.app/api/v1/team/${row.team.id}/image` : null,
+    played: row.matches || 0,
+    won: row.wins || 0,
+    drawn: row.draws || 0,
+    lost: row.losses || 0,
+    gf: row.scoresFor || 0,
+    ga: row.scoresAgainst || 0,
+    gd: (row.scoresFor || 0) - (row.scoresAgainst || 0),
+    points: row.points || 0,
+    form: row.form?.slice(-5) || "",
+  }));
 }
