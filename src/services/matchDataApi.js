@@ -155,11 +155,18 @@ async function apiRequest(endpoint) {
  */
 export async function getNextFixture(teamName) {
   const teamId = TEAM_IDS[teamName];
-  if (!teamId) return getMockNextFixture(teamName);
+  if (!teamId) {
+    console.log(`⚠️ No team ID for ${teamName}, using mock fixture`);
+    return getMockNextFixture(teamName);
+  }
 
   const data = await apiRequest(`/fixtures?team=${teamId}&next=1`);
-  if (!data || data.length === 0) return getMockNextFixture(teamName);
+  if (!data || data.length === 0) {
+    console.log(`⚠️ No upcoming fixtures from API for ${teamName}, using mock`);
+    return getMockNextFixture(teamName);
+  }
 
+  console.log(`✅ Got REAL fixture for ${teamName}:`, data[0]);
   const fixture = data[0];
   return {
     id: fixture.fixture.id,
@@ -183,11 +190,18 @@ export async function getNextFixture(teamName) {
  */
 export async function getTeamForm(teamName) {
   const teamId = TEAM_IDS[teamName];
-  if (!teamId) return getMockTeamForm(teamName);
+  if (!teamId) {
+    console.log(`⚠️ No team ID for ${teamName}, using mock form`);
+    return getMockTeamForm(teamName);
+  }
 
   const data = await apiRequest(`/fixtures?team=${teamId}&last=5`);
-  if (!data || data.length === 0) return getMockTeamForm(teamName);
+  if (!data || data.length === 0) {
+    console.log(`⚠️ No recent fixtures from API for ${teamName}, using mock form`);
+    return getMockTeamForm(teamName);
+  }
 
+  console.log(`✅ Got REAL form for ${teamName}: ${data.length} matches`);
   return data.map(fixture => ({
     id: fixture.fixture.id,
     date: fixture.fixture.date,
@@ -255,11 +269,18 @@ export async function getH2H(team1Name, team2Name) {
  */
 export async function getInjuries(teamName) {
   const teamId = TEAM_IDS[teamName];
-  if (!teamId) return getMockInjuries(teamName);
+  if (!teamId) {
+    console.log(`⚠️ No team ID for ${teamName}, using mock injuries`);
+    return getMockInjuries(teamName);
+  }
 
-  const data = await apiRequest(`/injuries?team=${teamId}&season=2024`);
-  if (!data || data.length === 0) return getMockInjuries(teamName);
+  const data = await apiRequest(`/injuries?team=${teamId}&season=2025`);
+  if (!data || data.length === 0) {
+    console.log(`⚠️ No injuries from API for ${teamName} (could mean no injuries!)`);
+    return []; // Return empty - no injuries is good news!
+  }
 
+  console.log(`✅ Got REAL injuries for ${teamName}: ${data.length} players`);
   return data.slice(0, 8).map(injury => ({
     player: injury.player.name,
     photo: injury.player.photo,
@@ -273,14 +294,24 @@ export async function getInjuries(teamName) {
  */
 export async function getStandings(league) {
   const leagueId = LEAGUE_IDS[league];
-  if (!leagueId) return getMockStandings(league);
+  if (!leagueId) {
+    console.log(`⚠️ No league ID for ${league}, using mock standings`);
+    return getMockStandings(league);
+  }
 
-  const data = await apiRequest(`/standings?league=${leagueId}&season=2024`);
-  if (!data || data.length === 0) return getMockStandings(league);
+  const data = await apiRequest(`/standings?league=${leagueId}&season=2025`);
+  if (!data || data.length === 0) {
+    console.log(`⚠️ No standings from API for ${league}, using mock`);
+    return getMockStandings(league);
+  }
 
   const standings = data[0]?.league?.standings?.[0];
-  if (!standings) return getMockStandings(league);
+  if (!standings) {
+    console.log(`⚠️ Standings format unexpected for ${league}, using mock`);
+    return getMockStandings(league);
+  }
 
+  console.log(`✅ Got REAL standings for ${league}: ${standings.length} teams`);
   return standings.slice(0, 10).map(team => ({
     rank: team.rank,
     name: team.team.name,
