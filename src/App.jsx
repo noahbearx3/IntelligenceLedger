@@ -47,60 +47,6 @@ const ledgerRows = [
   },
 ];
 
-const flowSteps = [
-  {
-    title: "Research",
-    detail: "Open a team to see RSS and tidbits in one view.",
-  },
-  {
-    title: "Validate",
-    detail: "Audit a pro by reviewing every pick, wins and losses.",
-  },
-  {
-    title: "Commit",
-    detail: "Post a 1-unit pick with a data anchor before lock.",
-  },
-  {
-    title: "Review",
-    detail: "Loss prompts encourage cool-downs and reflection.",
-  },
-];
-
-const personaFeatures = [
-  {
-    title: "Aggregated Intelligence Terminal",
-    points: [
-      "Unified feed mixer with source tags and recency scoring.",
-      "Change tracker for odds, injury, and sentiment deltas.",
-      "First-to-market alerts on verified tidbits.",
-    ],
-  },
-  {
-    title: "Credibility & Verification",
-    points: [
-      "Verified analyst weighting for sentiment heat maps.",
-      "Tipster audit view with full, immutable pick history.",
-      "Tidbit validator badges with evidence links.",
-    ],
-  },
-  {
-    title: "Anti-Chase Controls",
-    points: [
-      "Configurable cooldowns after loss streaks.",
-      "Loss-streak guardrails requiring data anchors.",
-      "Daily unit-cap mode until next day.",
-    ],
-  },
-  {
-    title: "Research Efficiency Toolkit",
-    points: [
-      "Source credibility scores based on accuracy.",
-      "Stat snapshot cards for verified data anchors.",
-      "Noise filter to hide unverified content.",
-    ],
-  },
-];
-
 const statusClasses = {
   Win: "text-accent-2",
   Loss: "text-danger",
@@ -285,18 +231,11 @@ export default function App() {
   const [aiSummary, setAiSummary] = useState("");
   const [tidbits, setTidbits] = useState(initialTidbits);
   const [tidbitInput, setTidbitInput] = useState("");
-  const [vault, setVault] = useState(25);
   const [sentiment, setSentiment] = useState(45);
-  const [stopLoss, setStopLoss] = useState(5);
-  const [lossToday, setLossToday] = useState(3);
-  const [cooldown, setCooldown] = useState(30);
-  const [unitCap, setUnitCap] = useState(5);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginName, setLoginName] = useState("Bob");
   const [pickOpen, setPickOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [blurOpen, setBlurOpen] = useState(false);
 
   // Odds selection state
   const [pickStep, setPickStep] = useState(1); // 1: sport, 2: game, 3: market, 4: confirm
@@ -409,16 +348,6 @@ export default function App() {
     event.preventDefault();
     setIsLoggedIn(true);
     setLoginOpen(false);
-  };
-
-  const handleKillSwitch = () => {
-    if (lossToday >= stopLoss && stopLoss > 0) {
-      alert(
-        "Kill-Switch active. Posting and feed viewing are disabled until tomorrow."
-      );
-    } else {
-      alert("Kill-Switch set. You are within your stop-loss range.");
-    }
   };
 
   // Generate mock AI summary based on articles (used when real API unavailable)
@@ -542,12 +471,6 @@ export default function App() {
                   <span className="h-2 w-2 rounded-full bg-accent-2" />
                   {loginName}
                 </div>
-                <button
-                  className="rounded-xl border border-border px-4 py-2 text-sm"
-                  onClick={() => setSettingsOpen(true)}
-                >
-                  Logic Filter
-                </button>
                 <button
                   className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink"
                   onClick={() => setPickOpen(true)}
@@ -872,157 +795,6 @@ export default function App() {
             )}
           </div>
         </section>
-
-        <section className="rounded-xl border border-border bg-panel">
-          <div className="border-b border-border px-6 py-4">
-            <h2 className="text-lg font-semibold">Logic Filter</h2>
-          </div>
-          <div className="grid gap-5 px-6 py-6 lg:grid-cols-4">
-            <article className="rounded-xl border border-border bg-card p-5">
-              <h3 className="text-base font-semibold">The Blur Alert</h3>
-              <p className="mt-3 text-sm text-slate-300">
-                Triggers after 3 picks in 30 minutes following a loss. Offers a
-                cool-down and forces review of data anchors.
-              </p>
-              <button
-                className="mt-4 rounded-xl border border-border px-4 py-2 text-sm"
-                onClick={() => setBlurOpen(true)}
-              >
-                Simulate Blur
-              </button>
-            </article>
-            <article className="rounded-xl border border-border bg-card p-5">
-              <h3 className="text-base font-semibold">Kill-Switch</h3>
-              <p className="mt-3 text-sm text-slate-300">
-                Stops posting and feed access after a daily stop-loss is hit.
-              </p>
-              <div className="mt-4 flex items-center justify-between gap-3 text-sm">
-                <label>Stop-loss (Units)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={stopLoss}
-                  onChange={(event) => setStopLoss(Number(event.target.value))}
-                  className="w-20 rounded-lg border border-border bg-ink px-2 py-1"
-                />
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                <label>Losses today</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="20"
-                  value={lossToday}
-                  onChange={(event) => setLossToday(Number(event.target.value))}
-                  className="w-20 rounded-lg border border-border bg-ink px-2 py-1"
-                />
-              </div>
-              <button
-                className="mt-4 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink"
-                onClick={handleKillSwitch}
-              >
-                Apply Kill-Switch
-              </button>
-            </article>
-            <article className="rounded-xl border border-border bg-card p-5">
-              <h3 className="text-base font-semibold">Anti-Chase Guardrails</h3>
-              <p className="mt-3 text-sm text-slate-300">
-                Adds friction after loss streaks and enforces unit caps.
-              </p>
-              <div className="mt-4 flex items-center justify-between gap-3 text-sm">
-                <label>Cooldown (minutes)</label>
-                <select
-                  className="rounded-lg border border-border bg-ink px-2 py-1"
-                  value={cooldown}
-                  onChange={(event) => setCooldown(Number(event.target.value))}
-                >
-                  <option value={10}>10</option>
-                  <option value={30}>30</option>
-                  <option value={60}>60</option>
-                </select>
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                <label>Daily unit cap</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={unitCap}
-                  onChange={(event) => setUnitCap(Number(event.target.value))}
-                  className="w-20 rounded-lg border border-border bg-ink px-2 py-1"
-                />
-              </div>
-              <div className="mt-4 flex items-center gap-3 text-sm text-slate-300">
-                <input type="checkbox" defaultChecked className="accent-accent" />
-                Require data anchor after 2 losses
-              </div>
-            </article>
-            <article className="rounded-xl border border-border bg-card p-5">
-              <h3 className="text-base font-semibold">Recovery Fund Vault</h3>
-              <p className="mt-3 text-sm text-slate-300">
-                Protect survival funds by marking them as off-limits during
-                staking.
-              </p>
-              <div className="mt-4">
-                <label className="text-sm">Vaulted %</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="60"
-                  value={vault}
-                  onChange={(event) => setVault(Number(event.target.value))}
-                  className="mt-2 w-full"
-                />
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span>{vault}%</span>
-                  <span className="text-muted">Off-limits bankroll</span>
-                </div>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-border bg-panel">
-          <div className="border-b border-border px-6 py-4">
-            <h2 className="text-lg font-semibold">Persona-Driven Additions</h2>
-            <p className="text-sm text-muted">
-              Built for Bob: reduce research friction and prevent chase behavior.
-            </p>
-          </div>
-          <div className="grid gap-5 px-6 py-6 md:grid-cols-2">
-            {personaFeatures.map((feature) => (
-              <article
-                key={feature.title}
-                className="rounded-xl border border-border bg-card p-5"
-              >
-                <h3 className="text-base font-semibold">{feature.title}</h3>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                  {feature.points.map((point) => (
-                    <li key={point}>• {point}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-border bg-panel">
-          <div className="border-b border-border px-6 py-4">
-            <h2 className="text-lg font-semibold">Analyst Flow</h2>
-          </div>
-          <div className="grid gap-5 px-6 py-6 md:grid-cols-2 lg:grid-cols-4">
-            {flowSteps.map((step) => (
-              <div
-                key={step.title}
-                className="rounded-xl border border-border bg-card p-5"
-              >
-                <h4 className="text-base font-semibold">{step.title}</h4>
-                <p className="mt-2 text-sm text-slate-300">{step.detail}</p>
-              </div>
-            ))}
-          </div>
-        </section>
       </main>
 
       <footer className="px-6 pb-12 text-center text-xs text-muted md:px-12">
@@ -1285,71 +1057,7 @@ export default function App() {
         </form>
       </Modal>
 
-      <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)}>
-        <header className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Logic Filter Settings</h3>
-          <button
-            className="text-xl"
-            onClick={() => setSettingsOpen(false)}
-            aria-label="Close"
-          >
-            ×
-          </button>
-        </header>
-        <div className="space-y-3 text-sm">
-          {[
-            "Blur Alert enabled",
-            "Kill-Switch enabled",
-            "Loss-streak guardrails enabled",
-            "Recovery Fund Vault enabled",
-            "Noise filter for unverified tidbits",
-          ].map((label) => (
-            <label key={label} className="flex items-center gap-3">
-              <input type="checkbox" defaultChecked className="accent-accent" />
-              {label}
-            </label>
-          ))}
-        </div>
-        <button
-          className="mt-5 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink"
-          onClick={() => setSettingsOpen(false)}
-        >
-          Save
-        </button>
-      </Modal>
 
-      <Modal open={blurOpen} onClose={() => setBlurOpen(false)} tone="alert">
-        <header className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-warning">
-            Detecting Potential Chase
-          </h3>
-          <button
-            className="text-xl"
-            onClick={() => setBlurOpen(false)}
-            aria-label="Close"
-          >
-            ×
-          </button>
-        </header>
-        <p className="text-sm text-slate-300">
-          You've placed 3 picks in the last 30 minutes after a loss. Review your
-          tidbit data before proceeding.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <button
-            className="rounded-xl border border-border px-4 py-2 text-sm"
-            onClick={() => setBlurOpen(false)}
-          >
-            Review Tidbits
-          </button>
-          <button
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink"
-            onClick={() => setBlurOpen(false)}
-          >
-            Bench Me 4 Hours
-          </button>
-        </div>
-      </Modal>
     </div>
   );
 }
