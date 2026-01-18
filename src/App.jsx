@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getIntelligence, canUseRealApi } from "./services/newsApi";
+import { getOdds, SPORTS, BOOKMAKERS, formatOdds, findBestOdds } from "./services/oddsApi";
 
 const rssItems = [
   {
@@ -297,6 +298,18 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [blurOpen, setBlurOpen] = useState(false);
 
+  // Odds selection state
+  const [pickStep, setPickStep] = useState(1); // 1: sport, 2: game, 3: market, 4: confirm
+  const [selectedSport, setSelectedSport] = useState(null);
+  const [games, setGames] = useState([]);
+  const [gamesLoading, setGamesLoading] = useState(false);
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [selectedMarket, setSelectedMarket] = useState("spreads"); // h2h, spreads, totals
+  const [selectedOutcome, setSelectedOutcome] = useState(null);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [pickUnits, setPickUnits] = useState(1);
+  const [pickAnchor, setPickAnchor] = useState("");
+
   useEffect(() => {
     const id = setInterval(() => {
       setSentiment(35 + Math.random() * 50);
@@ -322,8 +335,74 @@ export default function App() {
 
   const handlePickSubmit = (event) => {
     event.preventDefault();
-    alert("Pick locked. Backend verification is required for immutable storage.");
+    
+    if (!selectedGame || !selectedOutcome || !selectedBook) {
+      alert("Please complete all selections");
+      return;
+    }
+
+    const bookData = selectedGame.bookmakers[selectedBook];
+    const marketData = bookData?.markets[selectedMarket];
+    const outcome = marketData?.find(o => o.name === selectedOutcome);
+    
+    const pickDetails = {
+      game: `${selectedGame.awayTeam} @ ${selectedGame.homeTeam}`,
+      pick: selectedOutcome,
+      market: selectedMarket,
+      odds: outcome?.price,
+      point: outcome?.point,
+      book: BOOKMAKERS[selectedBook]?.name,
+      units: pickUnits,
+      anchor: pickAnchor,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log("Pick locked:", pickDetails);
+    alert(`Pick locked!\n\n${pickDetails.pick} ${pickDetails.point ? `(${pickDetails.point})` : ""} @ ${formatOdds(pickDetails.odds)}\nBook: ${pickDetails.book}\nUnits: ${pickDetails.units}`);
+    
+    // Reset and close
+    resetPickModal();
     setPickOpen(false);
+  };
+
+  const resetPickModal = () => {
+    setPickStep(1);
+    setSelectedSport(null);
+    setGames([]);
+    setSelectedGame(null);
+    setSelectedMarket("spreads");
+    setSelectedOutcome(null);
+    setSelectedBook(null);
+    setPickUnits(1);
+    setPickAnchor("");
+  };
+
+  const handleSportSelect = async (sport) => {
+    setSelectedSport(sport);
+    setGamesLoading(true);
+    setGames([]);
+    
+    try {
+      const fetchedGames = await getOdds(sport.key);
+      setGames(fetchedGames);
+      setPickStep(2);
+    } catch (err) {
+      console.error("Failed to fetch games:", err);
+      alert("Failed to load games. Please try again.");
+    } finally {
+      setGamesLoading(false);
+    }
+  };
+
+  const handleGameSelect = (game) => {
+    setSelectedGame(game);
+    setPickStep(3);
+  };
+
+  const handleOddsSelect = (outcomeName, bookKey) => {
+    setSelectedOutcome(outcomeName);
+    setSelectedBook(bookKey);
+    setPickStep(4);
   };
 
   const handleLoginSubmit = (event) => {
@@ -951,50 +1030,213 @@ export default function App() {
         verified picks require backend integration.
       </footer>
 
-      <Modal open={pickOpen} onClose={() => setPickOpen(false)}>
+      <Modal open={pickOpen} onClose={() => { resetPickModal(); setPickOpen(false); }}>
         <header className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Post a Verified Pick</h3>
+          <div className="flex items-center gap-3">
+            {pickStep > 1 && (
+              <button
+                className="text-muted hover:text-slate-200"
+                onClick={() => setPickStep(pickStep - 1)}
+              >
+                ←
+              </button>
+            )}
+            <h3 className="text-lg font-semibold">
+              {pickStep === 1 && "Select Sport"}
+              {pickStep === 2 && "Select Game"}
+              {pickStep === 3 && "Select Odds"}
+              {pickStep === 4 && "Confirm Pick"}
+            </h3>
+          </div>
           <button
             className="text-xl"
-            onClick={() => setPickOpen(false)}
+            onClick={() => { resetPickModal(); setPickOpen(false); }}
             aria-label="Close"
           >
             ×
           </button>
         </header>
-        <form className="space-y-3" onSubmit={handlePickSubmit}>
-          <label className="text-sm">
-            Pick
-            <input
-              type="text"
-              placeholder="Bills -3.5"
-              required
-              className="mt-2 w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="text-sm">
-            Units
-            <input
-              type="number"
-              min="0.25"
-              step="0.25"
-              defaultValue="1"
-              required
-              className="mt-2 w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="text-sm">
-            Data Anchor
-            <textarea
-              placeholder="What is the data anchor for this pick?"
-              required
-              className="mt-2 min-h-[90px] w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
-            />
-          </label>
-          <button className="w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink">
-            Lock Pick
-          </button>
-        </form>
+
+        {/* Step 1: Select Sport */}
+        {pickStep === 1 && (
+          <div className="grid grid-cols-2 gap-2">
+            {SPORTS.map((sport) => (
+              <button
+                key={sport.key}
+                onClick={() => handleSportSelect(sport)}
+                className="rounded-lg border border-border bg-ink px-4 py-3 text-sm hover:border-accent hover:bg-accent/10 transition-colors"
+              >
+                {sport.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Step 2: Select Game */}
+        {pickStep === 2 && (
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {gamesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                <span className="ml-3 text-sm text-muted">Loading games...</span>
+              </div>
+            ) : games.length === 0 ? (
+              <p className="text-center py-8 text-muted">No upcoming games found</p>
+            ) : (
+              games.map((game) => (
+                <button
+                  key={game.id}
+                  onClick={() => handleGameSelect(game)}
+                  className="w-full rounded-lg border border-border bg-ink p-3 text-left hover:border-accent transition-colors"
+                >
+                  <div className="font-semibold text-sm">
+                    {game.awayTeam} @ {game.homeTeam}
+                  </div>
+                  <div className="text-xs text-muted mt-1">
+                    {new Date(game.commenceTime).toLocaleString()}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Select Market & Odds */}
+        {pickStep === 3 && selectedGame && (
+          <div className="space-y-4">
+            <div className="text-center text-sm text-muted">
+              {selectedGame.awayTeam} @ {selectedGame.homeTeam}
+            </div>
+
+            {/* Market Tabs */}
+            <div className="flex gap-2">
+              {["spreads", "h2h", "totals"].map((market) => (
+                <button
+                  key={market}
+                  onClick={() => setSelectedMarket(market)}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                    selectedMarket === market
+                      ? "bg-accent text-ink"
+                      : "bg-ink border border-border hover:border-accent"
+                  }`}
+                >
+                  {market === "h2h" ? "Moneyline" : market === "spreads" ? "Spread" : "Total"}
+                </button>
+              ))}
+            </div>
+
+            {/* Odds Grid */}
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {Object.entries(selectedGame.bookmakers).map(([bookKey, bookData]) => {
+                const marketData = bookData.markets[selectedMarket];
+                if (!marketData) return null;
+
+                return (
+                  <div key={bookKey} className="rounded-lg border border-border bg-ink p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${bookData.color}`}>
+                        {bookData.name}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {marketData.map((outcome) => {
+                        const { bestOdds, bestBook } = findBestOdds(selectedGame, selectedMarket, outcome.name);
+                        const isBest = bestBook === bookKey;
+
+                        return (
+                          <button
+                            key={outcome.name}
+                            onClick={() => handleOddsSelect(outcome.name, bookKey)}
+                            className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                              isBest
+                                ? "border-accent-2 bg-accent-2/10"
+                                : "border-border hover:border-accent"
+                            }`}
+                          >
+                            <div className="text-xs text-muted truncate">{outcome.name}</div>
+                            <div className="flex items-center gap-2">
+                              {outcome.point !== undefined && (
+                                <span className="text-sm font-semibold">
+                                  {outcome.point > 0 ? `+${outcome.point}` : outcome.point}
+                                </span>
+                              )}
+                              <span className={`text-sm font-bold ${outcome.price > 0 ? "text-accent-2" : "text-slate-200"}`}>
+                                {formatOdds(outcome.price)}
+                              </span>
+                              {isBest && <span className="text-xs text-accent-2">★</span>}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Confirm Pick */}
+        {pickStep === 4 && selectedGame && selectedOutcome && selectedBook && (
+          <form className="space-y-4" onSubmit={handlePickSubmit}>
+            {/* Pick Summary */}
+            <div className="rounded-lg border border-accent/30 bg-accent/10 p-4">
+              <div className="text-xs text-muted mb-1">Your Pick</div>
+              <div className="font-semibold">
+                {selectedOutcome}
+                {(() => {
+                  const bookData = selectedGame.bookmakers[selectedBook];
+                  const marketData = bookData?.markets[selectedMarket];
+                  const outcome = marketData?.find(o => o.name === selectedOutcome);
+                  return outcome?.point !== undefined ? ` (${outcome.point > 0 ? '+' : ''}${outcome.point})` : '';
+                })()}
+              </div>
+              <div className="text-sm text-accent mt-1">
+                {formatOdds(
+                  selectedGame.bookmakers[selectedBook]?.markets[selectedMarket]?.find(
+                    o => o.name === selectedOutcome
+                  )?.price
+                )} @ {BOOKMAKERS[selectedBook]?.name}
+              </div>
+              <div className="text-xs text-muted mt-2">
+                {selectedGame.awayTeam} @ {selectedGame.homeTeam}
+              </div>
+            </div>
+
+            {/* Units */}
+            <label className="block text-sm">
+              Units
+              <input
+                type="number"
+                min="0.25"
+                step="0.25"
+                value={pickUnits}
+                onChange={(e) => setPickUnits(Number(e.target.value))}
+                required
+                className="mt-2 w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
+              />
+            </label>
+
+            {/* Data Anchor */}
+            <label className="block text-sm">
+              Data Anchor
+              <textarea
+                value={pickAnchor}
+                onChange={(e) => setPickAnchor(e.target.value)}
+                placeholder="What is the data anchor for this pick?"
+                required
+                className="mt-2 min-h-[70px] w-full rounded-xl border border-border bg-ink px-3 py-2 text-sm"
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink"
+            >
+              🔒 Lock Pick
+            </button>
+          </form>
+        )}
       </Modal>
 
       <Modal open={loginOpen} onClose={() => setLoginOpen(false)}>
