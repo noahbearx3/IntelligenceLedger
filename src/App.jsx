@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getIntelligence, canUseRealApi } from "./services/newsApi";
 import { getOdds, SPORTS, BOOKMAKERS, formatOdds, findBestOdds } from "./services/oddsApi";
 import { TEAMS_BY_LEAGUE, FEATURED_TEAMS, ALL_TEAMS, findTeam, getLeagueForTeam, getLogoUrl } from "./data/teams";
+import { PLAYERS_BY_LEAGUE, FEATURED_PLAYERS, ALL_PLAYERS, findPlayer, getLeagueForPlayer, getHeadshotUrl, FALLBACK_HEADSHOT, POSITION_COLORS } from "./data/players";
 
 const rssItems = [
   {
@@ -225,6 +226,9 @@ export default function App() {
   const [teamSearch, setTeamSearch] = useState("");
   const [showAllTeams, setShowAllTeams] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("Buffalo Bills");
+  const [selectedPlayer, setSelectedPlayer] = useState("Patrick Mahomes");
+  const [playerSearch, setPlayerSearch] = useState("");
+  const [showAllPlayers, setShowAllPlayers] = useState(false);
   const [newsSearchQuery, setNewsSearchQuery] = useState("Buffalo Bills");
   const [newsSearchActive, setNewsSearchActive] = useState(true);
   const [newsResults, setNewsResults] = useState([]);
@@ -258,12 +262,14 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // Auto-search when team changes
+  // Auto-search when team or player changes
   useEffect(() => {
-    if (selectedTeam) {
+    if (activeTab === "team" && selectedTeam) {
       performNewsSearch(selectedTeam);
+    } else if (activeTab === "player" && selectedPlayer) {
+      performNewsSearch(selectedPlayer);
     }
-  }, [selectedTeam]);
+  }, [selectedTeam, selectedPlayer, activeTab]);
 
   const handleAddTidbit = () => {
     const value = tidbitInput.trim();
@@ -518,165 +524,362 @@ export default function App() {
             </div>
           </div>
           <div className="space-y-6 px-6 py-6">
-            {/* Featured Teams */}
-            <div>
-              <h3 className="text-sm font-semibold text-muted mb-3">🔥 Featured</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {FEATURED_TEAMS.map((team) => (
-                  <button
-                    key={team.name}
-                    onClick={() => setSelectedTeam(team.name)}
-                    className={`group relative overflow-hidden rounded-xl border p-4 text-left transition-all ${
-                      selectedTeam === team.name
-                        ? "border-white/40 ring-2 ring-white/20"
-                        : "border-white/10 hover:border-white/30"
-                    }`}
-                    style={{
-                      background: `linear-gradient(135deg, ${team.primary}dd 0%, ${team.secondary}cc 100%)`,
-                    }}
-                  >
-                    {/* Background logo watermark */}
-                    <img
-                      src={getLogoUrl(team.abbr, team.league)}
-                      alt=""
-                      className="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:opacity-30 transition-opacity"
+            {activeTab === "team" ? (
+              <>
+                {/* Featured Teams */}
+                <div>
+                  <h3 className="text-sm font-semibold text-muted mb-3">🔥 Featured Teams</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {FEATURED_TEAMS.map((team) => (
+                      <button
+                        key={team.name}
+                        onClick={() => setSelectedTeam(team.name)}
+                        className={`group relative overflow-hidden rounded-xl border p-4 text-left transition-all ${
+                          selectedTeam === team.name
+                            ? "border-white/40 ring-2 ring-white/20"
+                            : "border-white/10 hover:border-white/30"
+                        }`}
+                        style={{
+                          background: `linear-gradient(135deg, ${team.primary}dd 0%, ${team.secondary}cc 100%)`,
+                        }}
+                      >
+                        <img
+                          src={getLogoUrl(team.abbr, team.league)}
+                          alt=""
+                          className="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:opacity-30 transition-opacity"
+                        />
+                        <div className="relative z-10 flex items-start gap-2">
+                          <img
+                            src={getLogoUrl(team.abbr, team.league)}
+                            alt={team.name}
+                            className="w-8 h-8 object-contain"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-white truncate drop-shadow-md">{team.name}</div>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-xs text-white/70 font-medium">{team.league}</span>
+                              <span className="text-xs text-white/90">{team.trending}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* League Filter + Team Search */}
+                <div className="flex flex-wrap items-end gap-4">
+                  <div className="flex gap-2">
+                    {Object.keys(TEAMS_BY_LEAGUE).map((league) => (
+                      <button
+                        key={league}
+                        onClick={() => { setSelectedLeague(league); setShowAllTeams(true); }}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                          selectedLeague === league
+                            ? "bg-accent text-ink"
+                            : "bg-card border border-border hover:border-accent"
+                        }`}
+                      >
+                        {league}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <input
+                      type="text"
+                      value={teamSearch}
+                      onChange={(e) => { setTeamSearch(e.target.value); setShowAllTeams(true); }}
+                      placeholder="Search all teams..."
+                      className="w-full rounded-xl border border-border bg-ink px-4 py-2 text-sm"
                     />
-                    {/* Content */}
-                    <div className="relative z-10 flex items-start gap-2">
+                  </div>
+                  <button
+                    onClick={() => setShowAllTeams(!showAllTeams)}
+                    className="text-xs text-accent hover:underline"
+                  >
+                    {showAllTeams ? "Hide all" : `Browse all ${TEAMS_BY_LEAGUE[selectedLeague]?.length || 0} teams`}
+                  </button>
+                </div>
+
+                {/* All Teams Grid */}
+                {showAllTeams && (
+                  <div className="rounded-xl border border-border bg-card/50 p-4 max-h-80 overflow-y-auto">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                      {(teamSearch
+                        ? ALL_TEAMS.filter(t => t.name.toLowerCase().includes(teamSearch.toLowerCase()))
+                        : TEAMS_BY_LEAGUE[selectedLeague] || []
+                      ).map((team) => (
+                        <button
+                          key={team.name}
+                          onClick={() => { setSelectedTeam(team.name); setShowAllTeams(false); setTeamSearch(""); }}
+                          className={`group relative overflow-hidden rounded-lg p-2 text-left transition-all ${
+                            selectedTeam === team.name
+                              ? "ring-2 ring-white/40"
+                              : "hover:ring-1 hover:ring-white/20"
+                          }`}
+                          style={{
+                            background: `linear-gradient(135deg, ${team.primary}bb 0%, ${team.secondary}99 100%)`,
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={getLogoUrl(team.abbr, getLeagueForTeam(team.name))}
+                              alt=""
+                              className="w-6 h-6 object-contain"
+                            />
+                            <span className="text-xs font-medium text-white truncate drop-shadow-sm">
+                              {team.name}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Current Team Selection */}
+                {(() => {
+                  const team = findTeam(selectedTeam);
+                  const league = getLeagueForTeam(selectedTeam);
+                  if (!team) return null;
+                  return (
+                    <div 
+                      className="relative overflow-hidden rounded-xl p-4"
+                      style={{
+                        background: `linear-gradient(135deg, ${team.primary}40 0%, ${team.secondary}30 100%)`,
+                        borderLeft: `4px solid ${team.primary}`,
+                      }}
+                    >
                       <img
-                        src={getLogoUrl(team.abbr, team.league)}
-                        alt={team.name}
-                        className="w-8 h-8 object-contain"
+                        src={getLogoUrl(team.abbr, league)}
+                        alt=""
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 opacity-15"
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-white truncate drop-shadow-md">{team.name}</div>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-xs text-white/70 font-medium">{team.league}</span>
-                          <span className="text-xs text-white/90">{team.trending}</span>
+                      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={getLogoUrl(team.abbr, league)}
+                            alt={team.name}
+                            className="w-12 h-12 object-contain"
+                          />
+                          <div>
+                            <div className="text-xs text-muted">Currently viewing</div>
+                            <div className="text-xl font-bold text-white">{selectedTeam}</div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <span 
+                            className="rounded-full px-3 py-1 font-semibold"
+                            style={{ backgroundColor: team.primary, color: '#fff' }}
+                          >
+                            {league}
+                          </span>
+                          <span className="rounded-full bg-white/10 px-3 py-1 text-white/80">
+                            2025 Season
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* League Filter + Team Search */}
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="flex gap-2">
-                {Object.keys(TEAMS_BY_LEAGUE).map((league) => (
-                  <button
-                    key={league}
-                    onClick={() => { setSelectedLeague(league); setShowAllTeams(true); }}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      selectedLeague === league
-                        ? "bg-accent text-ink"
-                        : "bg-card border border-border hover:border-accent"
-                    }`}
-                  >
-                    {league}
-                  </button>
-                ))}
-              </div>
-              <div className="flex-1 min-w-[200px]">
-                <input
-                  type="text"
-                  value={teamSearch}
-                  onChange={(e) => { setTeamSearch(e.target.value); setShowAllTeams(true); }}
-                  placeholder="Search all teams..."
-                  className="w-full rounded-xl border border-border bg-ink px-4 py-2 text-sm"
-                />
-              </div>
-              <button
-                onClick={() => setShowAllTeams(!showAllTeams)}
-                className="text-xs text-accent hover:underline"
-              >
-                {showAllTeams ? "Hide all" : `Browse all ${TEAMS_BY_LEAGUE[selectedLeague]?.length || 0} teams`}
-              </button>
-            </div>
-
-            {/* All Teams Grid (expandable) */}
-            {showAllTeams && (
-              <div className="rounded-xl border border-border bg-card/50 p-4 max-h-80 overflow-y-auto">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                  {(teamSearch
-                    ? ALL_TEAMS.filter(t => t.name.toLowerCase().includes(teamSearch.toLowerCase()))
-                    : TEAMS_BY_LEAGUE[selectedLeague] || []
-                  ).map((team) => (
-                    <button
-                      key={team.name}
-                      onClick={() => { setSelectedTeam(team.name); setShowAllTeams(false); setTeamSearch(""); }}
-                      className={`group relative overflow-hidden rounded-lg p-2 text-left transition-all ${
-                        selectedTeam === team.name
-                          ? "ring-2 ring-white/40"
-                          : "hover:ring-1 hover:ring-white/20"
-                      }`}
-                      style={{
-                        background: `linear-gradient(135deg, ${team.primary}bb 0%, ${team.secondary}99 100%)`,
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={getLogoUrl(team.abbr, getLeagueForTeam(team.name))}
-                          alt=""
-                          className="w-6 h-6 object-contain"
-                        />
-                        <span className="text-xs font-medium text-white truncate drop-shadow-sm">
-                          {team.name}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Current Selection */}
-            {(() => {
-              const team = findTeam(selectedTeam);
-              const league = getLeagueForTeam(selectedTeam);
-              if (!team) return null;
-              return (
-                <div 
-                  className="relative overflow-hidden rounded-xl p-4"
-                  style={{
-                    background: `linear-gradient(135deg, ${team.primary}40 0%, ${team.secondary}30 100%)`,
-                    borderLeft: `4px solid ${team.primary}`,
-                  }}
-                >
-                  {/* Background watermark */}
-                  <img
-                    src={getLogoUrl(team.abbr, league)}
-                    alt=""
-                    className="absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 opacity-15"
-                  />
-                  <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={getLogoUrl(team.abbr, league)}
-                        alt={team.name}
-                        className="w-12 h-12 object-contain"
-                      />
-                      <div>
-                        <div className="text-xs text-muted">Currently viewing</div>
-                        <div className="text-xl font-bold text-white">{selectedTeam}</div>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      <span 
-                        className="rounded-full px-3 py-1 font-semibold"
-                        style={{ backgroundColor: team.primary, color: '#fff' }}
-                      >
-                        {league}
-                      </span>
-                      <span className="rounded-full bg-white/10 px-3 py-1 text-white/80">
-                        2025 Season
-                      </span>
-                    </div>
+                  );
+                })()}
+              </>
+            ) : (
+              <>
+                {/* Featured Players */}
+                <div>
+                  <h3 className="text-sm font-semibold text-muted mb-3">⭐ Featured Players</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {FEATURED_PLAYERS.map((player) => {
+                      const teamData = findTeam(player.team);
+                      const posColor = POSITION_COLORS[player.position] || { bg: "bg-gray-500/20", text: "text-gray-400" };
+                      return (
+                        <button
+                          key={player.name}
+                          onClick={() => setSelectedPlayer(player.name)}
+                          className={`group relative overflow-hidden rounded-xl border p-4 text-left transition-all ${
+                            selectedPlayer === player.name
+                              ? "border-white/40 ring-2 ring-white/20"
+                              : "border-white/10 hover:border-white/30"
+                          }`}
+                          style={{
+                            background: teamData 
+                              ? `linear-gradient(135deg, ${teamData.primary}dd 0%, ${teamData.secondary}cc 100%)`
+                              : "linear-gradient(135deg, #333 0%, #222 100%)",
+                          }}
+                        >
+                          <img
+                            src={getHeadshotUrl(player.id, player.league)}
+                            alt=""
+                            onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
+                            className="absolute -right-2 -bottom-2 w-20 h-20 opacity-30 group-hover:opacity-50 transition-opacity"
+                          />
+                          <div className="relative z-10">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={getHeadshotUrl(player.id, player.league)}
+                                alt={player.name}
+                                onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
+                                className="w-10 h-10 rounded-full object-cover bg-black/20"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-bold text-white truncate drop-shadow-md">{player.name}</div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${posColor.bg} ${posColor.text}`}>
+                                    {player.position}
+                                  </span>
+                                  <span className="text-xs text-white/60 truncate">{player.team}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-2 text-xs text-white/80">{player.trending}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              );
-            })()}
+
+                {/* League Filter + Player Search */}
+                <div className="flex flex-wrap items-end gap-4">
+                  <div className="flex gap-2">
+                    {Object.keys(PLAYERS_BY_LEAGUE).map((league) => (
+                      <button
+                        key={league}
+                        onClick={() => { setSelectedLeague(league); setShowAllPlayers(true); }}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                          selectedLeague === league
+                            ? "bg-accent text-ink"
+                            : "bg-card border border-border hover:border-accent"
+                        }`}
+                      >
+                        {league}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <input
+                      type="text"
+                      value={playerSearch}
+                      onChange={(e) => { setPlayerSearch(e.target.value); setShowAllPlayers(true); }}
+                      placeholder="Search players..."
+                      className="w-full rounded-xl border border-border bg-ink px-4 py-2 text-sm"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setShowAllPlayers(!showAllPlayers)}
+                    className="text-xs text-accent hover:underline"
+                  >
+                    {showAllPlayers ? "Hide all" : `Browse all ${PLAYERS_BY_LEAGUE[selectedLeague]?.length || 0} players`}
+                  </button>
+                </div>
+
+                {/* All Players Grid */}
+                {showAllPlayers && (
+                  <div className="rounded-xl border border-border bg-card/50 p-4 max-h-80 overflow-y-auto">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {(playerSearch
+                        ? ALL_PLAYERS.filter(p => p.name.toLowerCase().includes(playerSearch.toLowerCase()))
+                        : PLAYERS_BY_LEAGUE[selectedLeague] || []
+                      ).map((player) => {
+                        const teamData = findTeam(player.team);
+                        const posColor = POSITION_COLORS[player.position] || { bg: "bg-gray-500/20", text: "text-gray-400" };
+                        return (
+                          <button
+                            key={player.name}
+                            onClick={() => { setSelectedPlayer(player.name); setShowAllPlayers(false); setPlayerSearch(""); }}
+                            className={`group relative overflow-hidden rounded-lg p-2 text-left transition-all ${
+                              selectedPlayer === player.name
+                                ? "ring-2 ring-white/40"
+                                : "hover:ring-1 hover:ring-white/20"
+                            }`}
+                            style={{
+                              background: teamData 
+                                ? `linear-gradient(135deg, ${teamData.primary}bb 0%, ${teamData.secondary}99 100%)`
+                                : "linear-gradient(135deg, #333 0%, #222 100%)",
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={getHeadshotUrl(player.id, getLeagueForPlayer(player.name))}
+                                alt=""
+                                onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
+                                className="w-8 h-8 rounded-full object-cover bg-black/20"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-white truncate">{player.name}</div>
+                                <div className="flex items-center gap-1">
+                                  <span className={`text-[10px] px-1 rounded ${posColor.bg} ${posColor.text}`}>
+                                    {player.position}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Current Player Selection */}
+                {(() => {
+                  const player = findPlayer(selectedPlayer);
+                  if (!player) return null;
+                  const league = getLeagueForPlayer(selectedPlayer);
+                  const teamData = findTeam(player.team);
+                  const posColor = POSITION_COLORS[player.position] || { bg: "bg-gray-500/20", text: "text-gray-400" };
+                  return (
+                    <div 
+                      className="relative overflow-hidden rounded-xl p-4"
+                      style={{
+                        background: teamData 
+                          ? `linear-gradient(135deg, ${teamData.primary}40 0%, ${teamData.secondary}30 100%)`
+                          : "linear-gradient(135deg, #333 0%, #222 100%)",
+                        borderLeft: teamData ? `4px solid ${teamData.primary}` : "4px solid #666",
+                      }}
+                    >
+                      <img
+                        src={getHeadshotUrl(player.id, league)}
+                        alt=""
+                        onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 opacity-20"
+                      />
+                      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={getHeadshotUrl(player.id, league)}
+                            alt={player.name}
+                            onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
+                            className="w-14 h-14 rounded-full object-cover bg-black/20 border-2 border-white/20"
+                          />
+                          <div>
+                            <div className="text-xs text-muted">Currently viewing</div>
+                            <div className="text-xl font-bold text-white">{selectedPlayer}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`text-xs px-2 py-0.5 rounded ${posColor.bg} ${posColor.text}`}>
+                                {player.position}
+                              </span>
+                              <span className="text-xs text-white/60">{player.team}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <span 
+                            className="rounded-full px-3 py-1 font-semibold"
+                            style={{ backgroundColor: teamData?.primary || "#666", color: '#fff' }}
+                          >
+                            {league}
+                          </span>
+                          <span className="rounded-full bg-white/10 px-3 py-1 text-white/80">
+                            2025 Season
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
 
             {/* News Search Input */}
             <div className="flex gap-3">
