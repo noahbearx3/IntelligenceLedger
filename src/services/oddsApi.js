@@ -13,16 +13,30 @@ export const SPORTS = [
   { key: "soccer_epl", name: "EPL Soccer" },
 ];
 
-// US Sportsbooks
+// US + UK + EU Sportsbooks
 export const BOOKMAKERS = {
-  draftkings: { name: "DraftKings", color: "bg-emerald-500/20 text-emerald-400" },
-  fanduel: { name: "FanDuel", color: "bg-blue-500/20 text-blue-400" },
-  betmgm: { name: "BetMGM", color: "bg-amber-500/20 text-amber-400" },
-  caesars: { name: "Caesars", color: "bg-red-500/20 text-red-400" },
-  pointsbetus: { name: "PointsBet", color: "bg-purple-500/20 text-purple-400" },
-  betonlineag: { name: "BetOnline", color: "bg-orange-500/20 text-orange-400" },
-  bovada: { name: "Bovada", color: "bg-rose-500/20 text-rose-400" },
-  unibet_us: { name: "Unibet", color: "bg-green-500/20 text-green-400" },
+  // US Books
+  draftkings: { name: "DraftKings", color: "bg-emerald-500/20 text-emerald-400", region: "US" },
+  fanduel: { name: "FanDuel", color: "bg-blue-500/20 text-blue-400", region: "US" },
+  betmgm: { name: "BetMGM", color: "bg-amber-500/20 text-amber-400", region: "US" },
+  caesars: { name: "Caesars", color: "bg-red-500/20 text-red-400", region: "US" },
+  pointsbetus: { name: "PointsBet", color: "bg-purple-500/20 text-purple-400", region: "US" },
+  betonlineag: { name: "BetOnline", color: "bg-orange-500/20 text-orange-400", region: "US" },
+  bovada: { name: "Bovada", color: "bg-rose-500/20 text-rose-400", region: "US" },
+  unibet_us: { name: "Unibet", color: "bg-green-500/20 text-green-400", region: "US" },
+  // UK Books
+  bet365: { name: "Bet365", color: "bg-yellow-500/20 text-yellow-400", region: "UK" },
+  williamhill: { name: "William Hill", color: "bg-blue-600/20 text-blue-300", region: "UK" },
+  ladbrokes_uk: { name: "Ladbrokes", color: "bg-red-600/20 text-red-400", region: "UK" },
+  paddypower: { name: "Paddy Power", color: "bg-green-600/20 text-green-400", region: "UK" },
+  skybet: { name: "Sky Bet", color: "bg-sky-500/20 text-sky-400", region: "UK" },
+  // EU Books
+  betfair: { name: "Betfair", color: "bg-amber-600/20 text-amber-400", region: "EU" },
+  unibet_eu: { name: "Unibet EU", color: "bg-teal-500/20 text-teal-400", region: "EU" },
+  betsson: { name: "Betsson", color: "bg-orange-600/20 text-orange-400", region: "EU" },
+  // Australia
+  sportsbet: { name: "Sportsbet", color: "bg-cyan-500/20 text-cyan-400", region: "AU" },
+  tab: { name: "TAB", color: "bg-indigo-500/20 text-indigo-400", region: "AU" },
 };
 
 /**
@@ -34,7 +48,7 @@ export const BOOKMAKERS = {
 export async function getOdds(sportKey, markets = "h2h,spreads,totals") {
   const url = new URL(`${BASE_URL}/sports/${sportKey}/odds`);
   url.searchParams.set("apiKey", ODDS_API_KEY);
-  url.searchParams.set("regions", "us");
+  url.searchParams.set("regions", "us,uk,eu,au");
   url.searchParams.set("markets", markets);
   url.searchParams.set("oddsFormat", "american");
 

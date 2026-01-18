@@ -218,12 +218,62 @@ const Modal = ({ open, onClose, children, tone = "default" }) => {
   );
 };
 
-const teams = ["Buffalo Bills", "Miami Dolphins", "Kansas City Chiefs", "Philadelphia Eagles"];
+// Organized teams by league
+const teamsByLeague = {
+  NFL: [
+    "Buffalo Bills", "Miami Dolphins", "New England Patriots", "New York Jets",
+    "Baltimore Ravens", "Cincinnati Bengals", "Cleveland Browns", "Pittsburgh Steelers",
+    "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Tennessee Titans",
+    "Denver Broncos", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers",
+    "Dallas Cowboys", "New York Giants", "Philadelphia Eagles", "Washington Commanders",
+    "Chicago Bears", "Detroit Lions", "Green Bay Packers", "Minnesota Vikings",
+    "Atlanta Falcons", "Carolina Panthers", "New Orleans Saints", "Tampa Bay Buccaneers",
+    "Arizona Cardinals", "Los Angeles Rams", "San Francisco 49ers", "Seattle Seahawks",
+  ],
+  NBA: [
+    "Boston Celtics", "Brooklyn Nets", "New York Knicks", "Philadelphia 76ers", "Toronto Raptors",
+    "Chicago Bulls", "Cleveland Cavaliers", "Detroit Pistons", "Indiana Pacers", "Milwaukee Bucks",
+    "Atlanta Hawks", "Charlotte Hornets", "Miami Heat", "Orlando Magic", "Washington Wizards",
+    "Denver Nuggets", "Minnesota Timberwolves", "Oklahoma City Thunder", "Portland Trail Blazers", "Utah Jazz",
+    "Golden State Warriors", "LA Clippers", "Los Angeles Lakers", "Phoenix Suns", "Sacramento Kings",
+    "Dallas Mavericks", "Houston Rockets", "Memphis Grizzlies", "New Orleans Pelicans", "San Antonio Spurs",
+  ],
+  NHL: [
+    "Boston Bruins", "Buffalo Sabres", "Detroit Red Wings", "Florida Panthers", "Montreal Canadiens",
+    "Ottawa Senators", "Tampa Bay Lightning", "Toronto Maple Leafs", "Carolina Hurricanes", "Columbus Blue Jackets",
+    "New Jersey Devils", "New York Islanders", "New York Rangers", "Philadelphia Flyers", "Pittsburgh Penguins",
+    "Washington Capitals", "Arizona Coyotes", "Chicago Blackhawks", "Colorado Avalanche", "Dallas Stars",
+    "Minnesota Wild", "Nashville Predators", "St. Louis Blues", "Winnipeg Jets", "Anaheim Ducks",
+    "Calgary Flames", "Edmonton Oilers", "Los Angeles Kings", "San Jose Sharks", "Seattle Kraken", "Vegas Golden Knights", "Vancouver Canucks",
+  ],
+  MLB: [
+    "New York Yankees", "Boston Red Sox", "Toronto Blue Jays", "Tampa Bay Rays", "Baltimore Orioles",
+    "Chicago White Sox", "Cleveland Guardians", "Detroit Tigers", "Kansas City Royals", "Minnesota Twins",
+    "Houston Astros", "Los Angeles Angels", "Oakland Athletics", "Seattle Mariners", "Texas Rangers",
+    "Atlanta Braves", "Miami Marlins", "New York Mets", "Philadelphia Phillies", "Washington Nationals",
+    "Chicago Cubs", "Cincinnati Reds", "Milwaukee Brewers", "Pittsburgh Pirates", "St. Louis Cardinals",
+    "Arizona Diamondbacks", "Colorado Rockies", "Los Angeles Dodgers", "San Diego Padres", "San Francisco Giants",
+  ],
+};
+
+// Flatten for backwards compatibility
+const teams = Object.values(teamsByLeague).flat();
+
+// Featured teams (trending/popular)
+const featuredTeams = [
+  { name: "Buffalo Bills", league: "NFL", trending: "🔥 Hot" },
+  { name: "Kansas City Chiefs", league: "NFL", trending: "📈 Playoff bound" },
+  { name: "Boston Celtics", league: "NBA", trending: "🏆 Title favorites" },
+  { name: "Los Angeles Dodgers", league: "MLB", trending: "⭐ Star power" },
+];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("team");
-  const [selectedTeam, setSelectedTeam] = useState(teams[0]);
-  const [newsSearchQuery, setNewsSearchQuery] = useState(teams[0]);
+  const [selectedLeague, setSelectedLeague] = useState("NFL");
+  const [teamSearch, setTeamSearch] = useState("");
+  const [showAllTeams, setShowAllTeams] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState("Buffalo Bills");
+  const [newsSearchQuery, setNewsSearchQuery] = useState("Buffalo Bills");
   const [newsSearchActive, setNewsSearchActive] = useState(true);
   const [newsResults, setNewsResults] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
@@ -516,33 +566,101 @@ export default function App() {
             </div>
           </div>
           <div className="space-y-6 px-6 py-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <label className="flex flex-col gap-2 text-sm text-muted">
-                Entity
-                <select
-                  className="w-60 rounded-xl border border-border bg-card px-4 py-2 text-sm text-slate-200"
-                  value={selectedTeam}
-                  onChange={(e) => {
-                    setSelectedTeam(e.target.value);
-                    // useEffect will auto-trigger search
-                  }}
-                >
-                  {teams.map((team) => (
-                    <option key={team} value={team}>
-                      {team}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="flex flex-wrap gap-2 text-xs">
-                {["NFL", "AFC East", "2025 Season"].map((chip) => (
-                  <span
-                    key={chip}
-                    className="rounded-full bg-accent/15 px-3 py-1 text-accent"
+            {/* Featured Teams */}
+            <div>
+              <h3 className="text-sm font-semibold text-muted mb-3">🔥 Featured</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {featuredTeams.map((team) => (
+                  <button
+                    key={team.name}
+                    onClick={() => setSelectedTeam(team.name)}
+                    className={`rounded-xl border p-3 text-left transition-all ${
+                      selectedTeam === team.name
+                        ? "border-accent bg-accent/10"
+                        : "border-border bg-card hover:border-accent/50"
+                    }`}
                   >
-                    {chip}
-                  </span>
+                    <div className="text-sm font-semibold truncate">{team.name}</div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-muted">{team.league}</span>
+                      <span className="text-xs">{team.trending}</span>
+                    </div>
+                  </button>
                 ))}
+              </div>
+            </div>
+
+            {/* League Filter + Team Search */}
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex gap-2">
+                {Object.keys(teamsByLeague).map((league) => (
+                  <button
+                    key={league}
+                    onClick={() => { setSelectedLeague(league); setShowAllTeams(true); }}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      selectedLeague === league
+                        ? "bg-accent text-ink"
+                        : "bg-card border border-border hover:border-accent"
+                    }`}
+                  >
+                    {league}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <input
+                  type="text"
+                  value={teamSearch}
+                  onChange={(e) => { setTeamSearch(e.target.value); setShowAllTeams(true); }}
+                  placeholder="Search all teams..."
+                  className="w-full rounded-xl border border-border bg-ink px-4 py-2 text-sm"
+                />
+              </div>
+              <button
+                onClick={() => setShowAllTeams(!showAllTeams)}
+                className="text-xs text-accent hover:underline"
+              >
+                {showAllTeams ? "Hide all" : "Browse all teams"}
+              </button>
+            </div>
+
+            {/* All Teams Grid (expandable) */}
+            {showAllTeams && (
+              <div className="rounded-xl border border-border bg-card p-4 max-h-60 overflow-y-auto">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {(teamSearch
+                    ? teams.filter(t => t.toLowerCase().includes(teamSearch.toLowerCase()))
+                    : teamsByLeague[selectedLeague] || []
+                  ).map((team) => (
+                    <button
+                      key={team}
+                      onClick={() => { setSelectedTeam(team); setShowAllTeams(false); setTeamSearch(""); }}
+                      className={`rounded-lg px-3 py-2 text-xs text-left truncate transition-colors ${
+                        selectedTeam === team
+                          ? "bg-accent text-ink font-semibold"
+                          : "bg-ink border border-border hover:border-accent"
+                      }`}
+                    >
+                      {team}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Current Selection */}
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-accent/30 bg-accent/5 p-4">
+              <div>
+                <div className="text-xs text-muted">Currently viewing</div>
+                <div className="text-lg font-semibold">{selectedTeam}</div>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full bg-accent/15 px-3 py-1 text-accent">
+                  {Object.entries(teamsByLeague).find(([_, teams]) => teams.includes(selectedTeam))?.[0] || "NFL"}
+                </span>
+                <span className="rounded-full bg-accent-2/15 px-3 py-1 text-accent-2">
+                  2025 Season
+                </span>
               </div>
             </div>
 
