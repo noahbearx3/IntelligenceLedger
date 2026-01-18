@@ -79,7 +79,13 @@ export async function searchNews(query) {
  */
 export async function generateAiSummary(articles, teamName) {
   if (!articles || articles.length === 0) {
-    return "";
+    return "📭 No articles found to summarize.";
+  }
+
+  // Check if OpenAI key is available
+  if (!OPENAI_KEY) {
+    console.warn("OpenAI API key not configured");
+    return `📰 Found ${articles.length} articles about ${teamName}. Configure OpenAI for AI summaries.`;
   }
 
   // Prepare article summaries for the prompt
@@ -88,50 +94,51 @@ export async function generateAiSummary(articles, teamName) {
     .map((a, i) => `${i + 1}. ${a.headline}: ${a.snippet}`)
     .join("\n");
 
-  const prompt = `You are a sports betting intelligence analyst. Analyze these recent articles from news sites, Reddit, and Twitter about "${teamName}" and provide a brief intelligence summary for a sports bettor.
+  const prompt = `Analyze these sports articles about "${teamName}" for a bettor. Give a 2-3 sentence summary with key insights (injuries, sentiment, trends). Use emojis.
 
-Sources (News, Reddit, Twitter):
-${articleSummaries}
+${articleSummaries}`;
 
-Provide a concise summary (max 3-4 sentences) highlighting:
-- Key injury updates or player status changes
-- Community sentiment (what Reddit/Twitter is saying)
-- Recent performance trends
-- Any factors that could impact betting (weather, travel, matchups)
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo", // More reliable than gpt-4o-mini
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+      }),
+    });
 
-Format with emojis for quick scanning. Be direct and actionable. Note if there's consensus or disagreement between sources.`;
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      console.error("OpenAI API error:", response.status, error);
+      
+      // Return a helpful fallback based on error type
+      if (response.status === 401) {
+        return `🔑 API key issue. Found ${articles.length} articles about ${teamName}.`;
+      } else if (response.status === 429) {
+        return `⏳ Rate limited. Found ${articles.length} articles about ${teamName}.`;
+      } else if (response.status === 402 || response.status === 403) {
+        return `💳 Quota exceeded. Found ${articles.length} articles about ${teamName}.`;
+      }
+      return `⚠️ AI unavailable. Found ${articles.length} articles about ${teamName}.`;
+    }
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENAI_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a sports betting intelligence analyst. Be concise, use emojis, focus on actionable insights."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      max_tokens: 200,
-      temperature: 0.7,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    console.error("OpenAI API error:", error);
-    throw new Error("Failed to generate AI summary");
+    const data = await response.json();
+    return data.choices[0]?.message?.content || `📰 Found ${articles.length} articles about ${teamName}.`;
+  } catch (err) {
+    console.error("OpenAI fetch error:", err);
+    return `📡 Connection error. Found ${articles.length} articles about ${teamName}.`;
   }
-
-  const data = await response.json();
-  return data.choices[0]?.message?.content || "";
 }
 
 /**
@@ -143,14 +150,8 @@ export async function getIntelligence(query) {
   // Fetch news articles
   const articles = await searchNews(query);
   
-  // Generate AI summary
-  let summary = "";
-  try {
-    summary = await generateAiSummary(articles, query);
-  } catch (err) {
-    console.error("AI summary failed:", err);
-    summary = `📰 Found ${articles.length} articles about ${query}. AI summary unavailable.`;
-  }
+  // Generate AI summary (function now handles its own errors)
+  const summary = await generateAiSummary(articles, query);
 
   return { articles, summary };
 }

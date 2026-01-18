@@ -32,3 +32,5 @@ Thumbs.db
 # agent-browser state
 auth.json
 *.state.json
+
+.vercel
