@@ -3,6 +3,7 @@ import { getIntelligence, canUseRealApi } from "./services/newsApi";
 import { getOdds, SPORTS, BOOKMAKERS, formatOdds, findBestOdds } from "./services/oddsApi";
 import { TEAMS_BY_LEAGUE, FEATURED_TEAMS, ALL_TEAMS, findTeam, getLeagueForTeam, getLogoUrl } from "./data/teams";
 import { PLAYERS_BY_LEAGUE, FEATURED_PLAYERS, ALL_PLAYERS, findPlayer, getLeagueForPlayer, getHeadshotUrl, FALLBACK_HEADSHOT, POSITION_COLORS } from "./data/players";
+import { ANALYSTS, getAnalystById, getTopAnalysts, formatStreak, formatWinRate, formatROI, formatFollowers, SPECIALTY_COLORS } from "./data/analysts";
 
 const rssItems = [
   {
@@ -242,6 +243,15 @@ export default function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginName, setLoginName] = useState("Bob");
   const [pickOpen, setPickOpen] = useState(false);
+  
+  // Social features state
+  const [following, setFollowing] = useState(() => {
+    const saved = localStorage.getItem("following");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [selectedAnalyst, setSelectedAnalyst] = useState(null);
+  const [analystModalOpen, setAnalystModalOpen] = useState(false);
+  const [feedTab, setFeedTab] = useState("discover"); // "discover" | "following"
 
   // Odds selection state
   const [pickStep, setPickStep] = useState(1); // 1: sport, 2: game, 3: market, 4: confirm
@@ -261,6 +271,39 @@ export default function App() {
     }, 6000);
     return () => clearInterval(id);
   }, []);
+
+  // Persist following state to localStorage
+  useEffect(() => {
+    localStorage.setItem("following", JSON.stringify(following));
+  }, [following]);
+
+  // Follow/unfollow handlers
+  const handleFollow = (analystId) => {
+    if (!isLoggedIn) {
+      setLoginOpen(true);
+      return;
+    }
+    setFollowing(prev => [...prev, analystId]);
+  };
+
+  const handleUnfollow = (analystId) => {
+    setFollowing(prev => prev.filter(id => id !== analystId));
+  };
+
+  const isFollowing = (analystId) => following.includes(analystId);
+
+  const openAnalystProfile = (analyst) => {
+    setSelectedAnalyst(analyst);
+    setAnalystModalOpen(true);
+  };
+
+  // Get picks from followed analysts
+  const getFollowingFeed = () => {
+    return ANALYSTS
+      .filter(a => following.includes(a.id))
+      .flatMap(a => a.recentPicks.map(p => ({ ...p, analyst: a })))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
 
   // Auto-search when team or player changes
   useEffect(() => {
@@ -1154,8 +1197,12 @@ export default function App() {
           <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
             {/* Quick Stats */}
             <div className="rounded-2xl border border-border bg-surface p-5">
-              <h3 className="font-display text-sm font-bold text-text-primary mb-4">Quick Stats</h3>
+              <h3 className="font-display text-sm font-bold text-text-primary mb-4">Your Stats</h3>
               <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-muted">Following</span>
+                  <span className="font-mono text-sm font-semibold text-accent">{following.length}</span>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-muted">Today's Record</span>
                   <span className="font-mono text-sm font-semibold text-success">2-1</span>
@@ -1164,51 +1211,111 @@ export default function App() {
                   <span className="text-sm text-text-muted">Week Profit</span>
                   <span className="font-mono text-sm font-semibold text-accent">+4.2u</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-text-muted">Active Picks</span>
-                  <span className="font-mono text-sm font-semibold text-text-primary">3</span>
-                </div>
               </div>
             </div>
 
-            {/* Trending */}
+            {/* Top Analysts */}
             <div className="rounded-2xl border border-border bg-surface p-5">
-              <h3 className="font-display text-sm font-bold text-text-primary mb-4">🔥 Trending</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-sm font-bold text-text-primary">Top Analysts</h3>
+                <span className="text-xs text-accent cursor-pointer hover:underline">View all</span>
+              </div>
               <div className="space-y-3">
-                {["Chiefs -3.5", "Lakers ML", "Ohtani Over 1.5 K"].map((pick, i) => (
-                  <div key={pick} className="flex items-center justify-between rounded-lg bg-ink px-3 py-2">
-                    <span className="text-sm text-text-secondary">{pick}</span>
-                    <span className="text-xs text-text-muted">#{i + 1}</span>
-                  </div>
+                {getTopAnalysts("winRate", 4).map((analyst) => (
+                  <button
+                    key={analyst.id}
+                    onClick={() => openAnalystProfile(analyst)}
+                    className="w-full flex items-center gap-3 rounded-lg bg-ink p-2.5 hover:bg-surface-elevated transition-colors text-left"
+                  >
+                    <img
+                      src={analyst.avatar}
+                      alt={analyst.displayName}
+                      className="w-9 h-9 rounded-full"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium text-text-primary truncate">{analyst.displayName}</span>
+                        {analyst.isVerified && <span className="text-accent text-xs">✓</span>}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-text-muted">
+                        <span className="text-success">{formatWinRate(analyst.stats.winRate)}</span>
+                        <span>•</span>
+                        <span>{formatFollowers(analyst.stats.followers)} followers</span>
+                      </div>
+                    </div>
+                    {!isFollowing(analyst.id) ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleFollow(analyst.id); }}
+                        className="shrink-0 rounded-md bg-accent/10 px-2 py-1 text-xs font-medium text-accent hover:bg-accent/20 transition-colors"
+                      >
+                        Follow
+                      </button>
+                    ) : (
+                      <span className="shrink-0 rounded-md bg-success/10 px-2 py-1 text-xs font-medium text-success">
+                        Following
+                      </span>
+                    )}
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="rounded-2xl border border-border bg-surface p-5">
-              <h3 className="font-display text-sm font-bold text-text-primary mb-4">Recent Activity</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex gap-3">
-                  <span className="text-success">✓</span>
-                  <div>
-                    <p className="text-text-secondary">Bills -6.5 hit</p>
-                    <p className="text-xs text-text-muted">2 hours ago</p>
-                  </div>
+            {/* Following Feed Preview */}
+            {following.length > 0 && (
+              <div className="rounded-2xl border border-border bg-surface p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display text-sm font-bold text-text-primary">Following Feed</h3>
+                  <span className="flex items-center gap-1.5 text-xs text-text-muted">
+                    <span className="h-1.5 w-1.5 rounded-full bg-success pulse-live" />
+                    Live
+                  </span>
                 </div>
-                <div className="flex gap-3">
-                  <span className="text-accent">+</span>
-                  <div>
-                    <p className="text-text-secondary">New pick posted</p>
-                    <p className="text-xs text-text-muted">4 hours ago</p>
-                  </div>
+                <div className="space-y-3">
+                  {getFollowingFeed().slice(0, 3).map((pick) => (
+                    <div key={pick.id} className="rounded-lg bg-ink p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <img
+                          src={pick.analyst.avatar}
+                          alt={pick.analyst.displayName}
+                          className="w-5 h-5 rounded-full"
+                        />
+                        <span className="text-xs text-text-muted">{pick.analyst.displayName}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-text-primary">{pick.pick}</span>
+                        <span className={`text-xs font-semibold ${pick.result === 'W' ? 'text-success' : 'text-danger'}`}>
+                          {pick.result === 'W' ? '✓ Win' : '✗ Loss'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-text-muted mt-1">
+                        {pick.units}u @ {pick.odds > 0 ? `+${pick.odds}` : pick.odds}
+                      </div>
+                    </div>
+                  ))}
+                  {getFollowingFeed().length === 0 && (
+                    <p className="text-xs text-text-muted text-center py-2">No recent picks from followed analysts</p>
+                  )}
                 </div>
-                <div className="flex gap-3">
-                  <span className="text-danger">✗</span>
-                  <div>
-                    <p className="text-text-secondary">Celtics ML missed</p>
-                    <p className="text-xs text-text-muted">Yesterday</p>
-                  </div>
-                </div>
+              </div>
+            )}
+
+            {/* Hot Streak */}
+            <div className="rounded-2xl border border-accent/30 bg-accent/5 p-5">
+              <h3 className="font-display text-sm font-bold text-accent mb-3">🔥 Hot Streaks</h3>
+              <div className="space-y-2">
+                {ANALYSTS.filter(a => a.stats.currentStreak >= 3).slice(0, 3).map((analyst) => (
+                  <button
+                    key={analyst.id}
+                    onClick={() => openAnalystProfile(analyst)}
+                    className="w-full flex items-center justify-between rounded-lg bg-ink/50 p-2 hover:bg-ink transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <img src={analyst.avatar} alt="" className="w-6 h-6 rounded-full" />
+                      <span className="text-sm text-text-primary">{analyst.displayName}</span>
+                    </div>
+                    <span className="text-xs font-bold text-accent">{formatStreak(analyst.stats.currentStreak)}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </aside>
@@ -1428,6 +1535,125 @@ export default function App() {
               🔒 Lock Pick
             </button>
           </form>
+        )}
+      </Modal>
+
+      {/* Analyst Profile Modal */}
+      <Modal open={analystModalOpen} onClose={() => setAnalystModalOpen(false)}>
+        {selectedAnalyst && (
+          <div className="space-y-5">
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                <img
+                  src={selectedAnalyst.avatar}
+                  alt={selectedAnalyst.displayName}
+                  className="w-16 h-16 rounded-full border-2 border-border"
+                />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-text-primary">{selectedAnalyst.displayName}</h3>
+                    {selectedAnalyst.isVerified && (
+                      <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">Verified</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-text-muted">@{selectedAnalyst.username}</p>
+                  <p className="text-xs text-text-muted mt-1">Member since {new Date(selectedAnalyst.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+                </div>
+              </div>
+              <button
+                className="text-xl text-text-muted hover:text-text-primary"
+                onClick={() => setAnalystModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Bio */}
+            <p className="text-sm text-text-secondary">{selectedAnalyst.bio}</p>
+
+            {/* Specialties */}
+            <div className="flex flex-wrap gap-2">
+              {selectedAnalyst.specialties.map((spec) => {
+                const colors = SPECIALTY_COLORS[spec] || { bg: "bg-gray-500/20", text: "text-gray-400" };
+                return (
+                  <span key={spec} className={`rounded-full px-2.5 py-1 text-xs font-medium ${colors.bg} ${colors.text}`}>
+                    {spec}
+                  </span>
+                );
+              })}
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-4 gap-3">
+              <div className="rounded-lg bg-ink p-3 text-center">
+                <p className="font-mono text-lg font-bold text-text-primary">{formatFollowers(selectedAnalyst.stats.followers)}</p>
+                <p className="text-xs text-text-muted">Followers</p>
+              </div>
+              <div className="rounded-lg bg-ink p-3 text-center">
+                <p className="font-mono text-lg font-bold text-success">{formatWinRate(selectedAnalyst.stats.winRate)}</p>
+                <p className="text-xs text-text-muted">Win Rate</p>
+              </div>
+              <div className="rounded-lg bg-ink p-3 text-center">
+                <p className="font-mono text-lg font-bold text-accent">{formatROI(selectedAnalyst.stats.roi)}</p>
+                <p className="text-xs text-text-muted">ROI</p>
+              </div>
+              <div className="rounded-lg bg-ink p-3 text-center">
+                <p className="font-mono text-lg font-bold text-text-primary">{selectedAnalyst.stats.totalPicks}</p>
+                <p className="text-xs text-text-muted">Picks</p>
+              </div>
+            </div>
+
+            {/* Current Streak */}
+            {selectedAnalyst.stats.currentStreak !== 0 && (
+              <div className={`rounded-lg p-3 text-center ${selectedAnalyst.stats.currentStreak > 0 ? 'bg-success/10 border border-success/30' : 'bg-danger/10 border border-danger/30'}`}>
+                <span className={`text-sm font-semibold ${selectedAnalyst.stats.currentStreak > 0 ? 'text-success' : 'text-danger'}`}>
+                  {formatStreak(selectedAnalyst.stats.currentStreak)} Current Streak
+                </span>
+              </div>
+            )}
+
+            {/* Recent Picks */}
+            {selectedAnalyst.recentPicks.length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Recent Picks</h4>
+                <div className="space-y-2">
+                  {selectedAnalyst.recentPicks.slice(0, 4).map((pick) => (
+                    <div key={pick.id} className="flex items-center justify-between rounded-lg bg-ink p-3">
+                      <div>
+                        <span className="text-sm font-medium text-text-primary">{pick.pick}</span>
+                        <div className="text-xs text-text-muted">
+                          {pick.units}u @ {pick.odds > 0 ? `+${pick.odds}` : pick.odds} • {pick.date}
+                        </div>
+                      </div>
+                      <span className={`rounded-md px-2 py-1 text-xs font-semibold ${pick.result === 'W' ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}>
+                        {pick.result === 'W' ? '✓ Win' : '✗ Loss'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Follow Button */}
+            <div className="pt-2">
+              {!isFollowing(selectedAnalyst.id) ? (
+                <button
+                  onClick={() => { handleFollow(selectedAnalyst.id); }}
+                  className="btn btn-primary w-full"
+                >
+                  Follow @{selectedAnalyst.username}
+                </button>
+              ) : (
+                <button
+                  onClick={() => { handleUnfollow(selectedAnalyst.id); }}
+                  className="btn btn-secondary w-full"
+                >
+                  Unfollow
+                </button>
+              )}
+            </div>
+          </div>
         )}
       </Modal>
 
