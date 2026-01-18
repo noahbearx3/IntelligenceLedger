@@ -94,9 +94,17 @@ export async function generateAiSummary(articles, teamName) {
     .map((a, i) => `${i + 1}. ${a.headline}: ${a.snippet}`)
     .join("\n");
 
-  const prompt = `Analyze these sports articles about "${teamName}" for a bettor. Give a 2-3 sentence summary with key insights (injuries, sentiment, trends). Use emojis.
+  const prompt = `You are a sports betting intelligence analyst. Analyze these recent articles about "${teamName}" and provide a brief intelligence summary for a sports bettor.
 
-${articleSummaries}`;
+Sources:
+${articleSummaries}
+
+Provide a concise summary (2-3 sentences) highlighting:
+- Key injury updates or player status
+- Community sentiment and trends  
+- Factors that could impact betting
+
+Use emojis for quick scanning. Be direct and actionable.`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -106,14 +114,18 @@ ${articleSummaries}`;
         "Authorization": `Bearer ${OPENAI_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo", // More reliable than gpt-4o-mini
+        model: "gpt-4o-mini",
         messages: [
+          {
+            role: "system",
+            content: "You are a sports betting intelligence analyst. Be concise, use emojis, focus on actionable insights for bettors."
+          },
           {
             role: "user",
             content: prompt
           }
         ],
-        max_tokens: 150,
+        max_tokens: 200,
         temperature: 0.7,
       }),
     });
