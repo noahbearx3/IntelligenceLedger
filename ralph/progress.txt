@@ -2,5 +2,18 @@
 - React + Tailwind CSS for UI components
 - Vite for dev server (npm run dev)
 - PRD located at PRD.md in project root
+- Teams array defined outside App component for reuse
+- Controlled inputs with onChange + onKeyDown for Enter handling
 
+---
+
+## 2026-01-18 - US-001
+- **What was implemented:** News search input in Team/Player DNA section
+- **Files changed:** src/App.jsx
+- **Learnings for future iterations:**
+  - Added `teams` array at module level for dropdown options
+  - Added state: `selectedTeam`, `newsSearchQuery`, `newsSearchActive`
+  - Search input placeholder dynamically shows selected team name
+  - `handleNewsSearch` function ready for US-003 to add actual filtering
+  - Entity dropdown now controlled with value/onChange
 ---
