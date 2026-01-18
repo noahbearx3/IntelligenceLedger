@@ -1,44 +1,73 @@
-const NEWSAPI_KEY = import.meta.env.VITE_NEWSAPI_KEY;
+const SERPER_KEY = import.meta.env.VITE_SERPER_KEY;
 const OPENAI_KEY = import.meta.env.VITE_OPENAI_KEY;
 
-// NewsAPI free tier only works on localhost
-const isLocalhost = typeof window !== 'undefined' && 
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-export const canUseRealApi = isLocalhost && NEWSAPI_KEY && OPENAI_KEY;
+// Serper works everywhere (no localhost restriction like NewsAPI)
+export const canUseRealApi = !!(SERPER_KEY && OPENAI_KEY);
 
 /**
- * Search for news articles using NewsAPI
+ * Detect source type from URL or title
+ */
+function detectSourceType(url, title) {
+  const urlLower = url?.toLowerCase() || "";
+  const titleLower = title?.toLowerCase() || "";
+  
+  if (urlLower.includes("reddit.com") || urlLower.includes("redd.it")) return "Reddit";
+  if (urlLower.includes("twitter.com") || urlLower.includes("x.com")) return "Twitter";
+  if (urlLower.includes("espn.com")) return "ESPN";
+  if (urlLower.includes("nfl.com")) return "NFL.com";
+  if (urlLower.includes("yahoo.com")) return "Yahoo Sports";
+  if (urlLower.includes("cbssports.com")) return "CBS Sports";
+  if (urlLower.includes("bleacherreport.com")) return "Bleacher Report";
+  if (urlLower.includes("theathletic.com")) return "The Athletic";
+  if (urlLower.includes("profootballtalk")) return "Pro Football Talk";
+  
+  return "News";
+}
+
+/**
+ * Search for news, Reddit, and Twitter using Serper (Google Search API)
  * @param {string} query - Search term (e.g., "Buffalo Bills")
- * @returns {Promise<Array>} Array of news articles
+ * @returns {Promise<Array>} Array of articles from various sources
  */
 export async function searchNews(query) {
-  const url = new URL("https://newsapi.org/v2/everything");
-  url.searchParams.set("q", query);
-  url.searchParams.set("sortBy", "publishedAt");
-  url.searchParams.set("language", "en");
-  url.searchParams.set("pageSize", "15");
-  url.searchParams.set("apiKey", NEWSAPI_KEY);
-
-  const response = await fetch(url.toString());
+  // Search for news + Reddit + Twitter in one query
+  const searchQuery = `${query} (site:reddit.com OR site:twitter.com OR news)`;
   
+  const response = await fetch("https://google.serper.dev/search", {
+    method: "POST",
+    headers: {
+      "X-API-KEY": SERPER_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      q: searchQuery,
+      num: 20,
+    }),
+  });
+
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || "Failed to fetch news");
+    throw new Error(error.message || "Failed to fetch search results");
   }
 
   const data = await response.json();
   
+  // Combine organic results and news results
+  const allResults = [
+    ...(data.organic || []),
+    ...(data.news || []),
+  ];
+
   // Transform to our article format
-  return data.articles.map((article, index) => ({
+  return allResults.map((result, index) => ({
     id: index + 1,
-    headline: article.title || "Untitled",
-    snippet: article.description || article.content?.slice(0, 150) || "",
-    source: article.source?.name || "Unknown",
-    url: article.url,
-    timestamp: article.publishedAt,
-    imageUrl: article.urlToImage,
-    relatedTeams: [query], // Tag with the search query
+    headline: result.title || "Untitled",
+    snippet: result.snippet || result.description || "",
+    source: detectSourceType(result.link, result.title),
+    url: result.link,
+    timestamp: result.date || new Date().toISOString(),
+    imageUrl: result.imageUrl || result.thumbnail,
+    relatedTeams: [query],
   }));
 }
 
@@ -59,17 +88,18 @@ export async function generateAiSummary(articles, teamName) {
     .map((a, i) => `${i + 1}. ${a.headline}: ${a.snippet}`)
     .join("\n");
 
-  const prompt = `You are a sports betting intelligence analyst. Analyze these recent news articles about "${teamName}" and provide a brief intelligence summary for a sports bettor.
+  const prompt = `You are a sports betting intelligence analyst. Analyze these recent articles from news sites, Reddit, and Twitter about "${teamName}" and provide a brief intelligence summary for a sports bettor.
 
-Articles:
+Sources (News, Reddit, Twitter):
 ${articleSummaries}
 
 Provide a concise summary (max 3-4 sentences) highlighting:
 - Key injury updates or player status changes
+- Community sentiment (what Reddit/Twitter is saying)
 - Recent performance trends
 - Any factors that could impact betting (weather, travel, matchups)
 
-Format with emojis for quick scanning. Be direct and actionable.`;
+Format with emojis for quick scanning. Be direct and actionable. Note if there's consensus or disagreement between sources.`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
