@@ -4,7 +4,7 @@ import { getOdds, SPORTS, BOOKMAKERS, formatOdds, findBestOdds } from "./service
 import { TEAMS_BY_LEAGUE, FEATURED_TEAMS, ALL_TEAMS, findTeam, getLeagueForTeam, getLogoUrl } from "./data/teams";
 import { PLAYERS_BY_LEAGUE, FEATURED_PLAYERS, ALL_PLAYERS, findPlayer, getLeagueForPlayer, getHeadshotUrl, FALLBACK_HEADSHOT, POSITION_COLORS } from "./data/players";
 import { ANALYSTS, getAnalystById, getTopAnalysts, formatStreak, formatWinRate, formatROI, formatFollowers, SPECIALTY_COLORS, COMMENTS, REACTIONS, REACTION_TYPES, getCommentsForPick, getReactionsForPick } from "./data/analysts";
-import SofaScoreWidget, { SOFASCORE_TEAM_IDS, SofaScoreSection } from "./components/SofaScoreWidget";
+import MatchIntelSection from "./components/MatchIntelSection";
 
 const rssItems = [
   {
@@ -1036,9 +1036,9 @@ export default function App() {
                   );
                 })()}
 
-                {/* SofaScore Widgets - Match Data, Lineups, H2H, Injuries */}
-                {SOFASCORE_TEAM_IDS[selectedTeam] && (
-                  <SofaScoreSection teamName={selectedTeam} />
+                {/* Match Intel - Fixtures, Form, Lineups, H2H, Injuries */}
+                {selectedTeam && (
+                  <MatchIntelSection teamName={selectedTeam} league={selectedLeague} />
                 )}
               </>
             ) : (
