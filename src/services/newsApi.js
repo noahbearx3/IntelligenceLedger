@@ -1,6 +1,12 @@
 const NEWSAPI_KEY = import.meta.env.VITE_NEWSAPI_KEY;
 const OPENAI_KEY = import.meta.env.VITE_OPENAI_KEY;
 
+// NewsAPI free tier only works on localhost
+const isLocalhost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+export const canUseRealApi = isLocalhost && NEWSAPI_KEY && OPENAI_KEY;
+
 /**
  * Search for news articles using NewsAPI
  * @param {string} query - Search term (e.g., "Buffalo Bills")

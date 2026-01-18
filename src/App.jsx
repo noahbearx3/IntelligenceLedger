@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getIntelligence } from "./services/newsApi";
+import { getIntelligence, canUseRealApi } from "./services/newsApi";
 
 const rssItems = [
   {
@@ -342,8 +342,8 @@ export default function App() {
     }
   };
 
-  // Generate mock AI summary based on articles
-  const generateAiSummary = (articles, teamName) => {
+  // Generate mock AI summary based on articles (used when real API unavailable)
+  const generateMockAiSummary = (articles, teamName) => {
     if (articles.length === 0) return "";
     
     const injuryArticles = articles.filter(a => 
@@ -379,6 +379,28 @@ export default function App() {
     setNewsError(null);
     setAiSummary("");
     setNewsResults([]);
+
+    // Use mock data for deployed version (NewsAPI free tier = localhost only)
+    if (!canUseRealApi) {
+      setTimeout(() => {
+        const searchLower = query.toLowerCase();
+        const filtered = mockNewsData
+          .filter((article) => {
+            const inHeadline = article.headline.toLowerCase().includes(searchLower);
+            const inSnippet = article.snippet.toLowerCase().includes(searchLower);
+            const inTeams = article.relatedTeams.some((team) =>
+              team.toLowerCase().includes(searchLower)
+            );
+            return inHeadline || inSnippet || inTeams;
+          })
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        setNewsResults(filtered);
+        setAiSummary(generateMockAiSummary(filtered, query));
+        setNewsLoading(false);
+      }, 500);
+      return;
+    }
 
     try {
       // Real API call to NewsAPI + OpenAI
