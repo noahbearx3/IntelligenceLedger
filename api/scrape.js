@@ -129,6 +129,10 @@ export default async function handler(req, res) {
       case "standings":
         data = await scrapeStandings(context, league);
         break;
+      case "debug":
+        // Debug endpoint - capture page HTML
+        data = await debugPage(context, teamName);
+        break;
       default:
         return res.status(400).json({ error: "Invalid type" });
     }
@@ -366,6 +370,51 @@ async function scrapeForm(context, teamName) {
 
   await page.close();
   return results;
+}
+
+/**
+ * Debug function - capture page content
+ */
+async function debugPage(context, teamName) {
+  const slug = TEAM_SLUGS[teamName] || "liverpool";
+  const page = await context.newPage();
+  
+  const url = `${BASE_URL}/team/${slug}/`;
+  console.log(`🔍 Debug: Navigating to ${url}`);
+  
+  try {
+    await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+    await page.waitForTimeout(5000);
+    
+    const title = await page.title();
+    const url_final = page.url();
+    const html = await page.content();
+    
+    // Count various elements
+    const elementCounts = await page.evaluate(() => {
+      return {
+        divs: document.querySelectorAll("div").length,
+        events: document.querySelectorAll("[class*='event']").length,
+        matches: document.querySelectorAll("[class*='match']").length,
+        participants: document.querySelectorAll("[class*='participant']").length,
+        scores: document.querySelectorAll("[class*='score']").length,
+        body_text_preview: document.body?.innerText?.substring(0, 500) || "no body",
+      };
+    });
+    
+    await page.close();
+    
+    return {
+      title,
+      url: url_final,
+      html_length: html.length,
+      html_preview: html.substring(0, 2000),
+      elements: elementCounts,
+    };
+  } catch (error) {
+    await page.close();
+    return { error: error.message };
+  }
 }
 
 /**
