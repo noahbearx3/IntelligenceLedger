@@ -707,12 +707,14 @@ export default function App() {
                               : "linear-gradient(135deg, #333 0%, #222 100%)",
                           }}
                         >
-                          <img
-                            src={getHeadshotUrl(player.id, player.league)}
-                            alt=""
-                            onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
-                            className="absolute -right-2 -bottom-2 w-20 h-20 opacity-30 group-hover:opacity-50 transition-opacity"
-                          />
+                          {/* Team logo as background watermark */}
+                          {teamData && (
+                            <img
+                              src={getLogoUrl(teamData.abbr, player.league)}
+                              alt=""
+                              className="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:opacity-30 transition-opacity"
+                            />
+                          )}
                           <div className="relative z-10">
                             <div className="flex items-center gap-2">
                               <img
@@ -838,12 +840,14 @@ export default function App() {
                         borderLeft: teamData ? `4px solid ${teamData.primary}` : "4px solid #666",
                       }}
                     >
-                      <img
-                        src={getHeadshotUrl(player.id, league)}
-                        alt=""
-                        onError={(e) => { e.target.src = FALLBACK_HEADSHOT; }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 opacity-20"
-                      />
+                      {/* Team logo as background watermark */}
+                      {teamData && (
+                        <img
+                          src={getLogoUrl(teamData.abbr, league)}
+                          alt=""
+                          className="absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 opacity-15"
+                        />
+                      )}
                       <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                           <img
