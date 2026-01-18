@@ -1,71 +1,61 @@
-# AGENTS.md - Intelligence Ledger
-
-This file contains patterns, conventions, and learnings for AI agents (and developers) working on this codebase.
+# Intelligence Ledger - Agent Instructions
 
 ## Project Overview
 
-**Intelligence Ledger** is a social intelligence layer for sports betting. It aggregates data, news (RSS), and social sentiment into a "Team Entity" view while enforcing transparency through verified, immutable betting records.
+The Intelligence Ledger is a social intelligence layer for sports betting and prediction markets. It aggregates data, news (RSS), and social sentiment into a unified view while enforcing transparency through immutable betting records.
 
 ## Tech Stack
 
-- **Frontend**: React 18 + Vite 7
-- **Styling**: Tailwind CSS
-- **State**: React useState (local state for beta)
-- **Future**: Backend TBD (likely Node + QLDB or similar for immutability)
+- **Frontend:** React 18 + Tailwind CSS
+- **Build:** Vite 7.x
+- **Package Manager:** npm
 
-## Code Conventions
+## Commands
 
-### Component Structure
-- Single `App.jsx` file for beta (will be split into components later)
-- Tailwind classes inline, no separate CSS modules
-- Mock data at top of file for demo purposes
+```bash
+npm run dev      # Start dev server (http://localhost:5173)
+npm run build    # Production build
+npm run preview  # Preview production build
+```
 
-### Styling Patterns
-- Dark theme: `bg-ink` for backgrounds, `text-slate-200` for primary text
-- Cards: `rounded-xl border border-border bg-card p-5`
-- Buttons: `rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink`
-- Accent colors defined in `tailwind.config.cjs`
-
-### State Management
-- `useState` for all local state
-- Modal state: `[modalOpen, setModalOpen]` pattern
-- Form inputs: controlled components with `value` + `onChange`
-
-## File Structure
+## Project Structure
 
 ```
-/
-├── src/
-│   ├── App.jsx          # Main application component
-│   ├── main.jsx         # React entry point
-│   └── index.css        # Tailwind imports
-├── skills/              # Agent skill definitions
-│   ├── agent-browser.md # Browser automation skill
-│   ├── prd/SKILL.md     # PRD generation skill
-│   └── ralph/SKILL.md   # PRD-to-JSON converter skill
-├── tasks/               # Generated PRD files (when using prd skill)
-├── PRD.md               # Product requirements document
-└── AGENTS.md            # This file
+src/
+  App.jsx        # Main application component
+  main.jsx       # React entry point
+  index.css      # Tailwind imports + custom styles
+
+skills/          # Agent skill definitions
+  agent-browser/ # Browser automation skill
+  prd/           # PRD generation skill
+  ralph/         # Ralph PRD converter skill
+
+ralph/           # Ralph autonomous agent files
+  prompt.md      # Agent instructions
+  prd.json       # Current task list (when active)
+  progress.txt   # Iteration learnings
+
+PRD.md           # Product Requirements Document
 ```
+
+## Key Patterns
+
+- **Tailwind Config:** Custom colors defined in `tailwind.config.cjs` (ink, panel, card, accent, etc.)
+- **State Management:** React useState hooks (no external state library yet)
+- **Modals:** Custom Modal component in App.jsx
+- **Forms:** Controlled inputs with onChange handlers
 
 ## Gotchas
 
-1. **Vite 7 breaking changes**: Upgraded from Vite 5 due to security audit. Watch for deprecation warnings.
-2. **PowerShell on Windows**: Use `;` not `&&` for command chaining. Use `$env:VAR` not `%VAR%`.
-3. **agent-browser on Windows**: Daemon has issues. Use `npx playwright` directly as fallback.
+- Dev server runs on port 5173 (Vite default)
+- PowerShell on Windows: use semicolons instead of `&&` for command chaining
+- agent-browser has Windows daemon issues; use `npx playwright` as fallback
 
-## Quality Checks
+## Testing UI Changes
 
-Before committing:
-```bash
-npm run dev        # Verify it builds and runs
-# Typecheck not yet configured (plain JSX)
-```
-
-## Future Considerations
-
-- [ ] Add TypeScript for type safety
-- [ ] Split App.jsx into component files
-- [ ] Add backend API for immutable ledger
-- [ ] Add authentication (Supabase or similar)
-- [ ] Add real RSS/sentiment API integrations
+For any frontend story, verify in browser:
+1. Run `npm run dev`
+2. Open http://localhost:5173
+3. Test the specific feature
+4. Check console for errors

@@ -1,0 +1,6 @@
+## Codebase Patterns
+- React + Tailwind CSS for UI components
+- Vite for dev server (npm run dev)
+- PRD located at PRD.md in project root
+
+---
