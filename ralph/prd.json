@@ -1,0 +1,68 @@
+{
+  "project": "IntelligenceLedger",
+  "branchName": "ralph/player-news-search",
+  "description": "Player News Search - Contextual news aggregation in Team/Player DNA tab",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create news search input in Player DNA tab",
+      "description": "As a user, I want a search input in the Player DNA tab so I can search for news about the selected player.",
+      "acceptanceCriteria": [
+        "Search input appears in the Team/Player DNA section when a player/team is selected",
+        "Placeholder text: 'Search news for [Player/Team Name]...'",
+        "Search triggers on Enter key or search button click",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add mock news data for beta",
+      "description": "As a developer, I need mock news data to demonstrate the feature before real API integration.",
+      "acceptanceCriteria": [
+        "Create mock news dataset with 10-15 sample articles for Bills, Dolphins, Chiefs, Eagles",
+        "Mock data includes variety of sources (RSS, Twitter, Reddit, ESPN)",
+        "Each article has: id, headline, snippet, source, url, timestamp, relatedTeams array",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Moved before US-003 since results display depends on data structure"
+    },
+    {
+      "id": "US-003",
+      "title": "Display news results with headline, snippet, and source",
+      "description": "As a user, I want to see search results that show the headline, a preview snippet, and the source so I can quickly scan relevant news.",
+      "acceptanceCriteria": [
+        "Each result card shows: headline (clickable), snippet (2-3 lines max 150 chars), source tag, timestamp",
+        "Source tags are color-coded: RSS (blue), Twitter (sky), Reddit (orange), API (green)",
+        "Clicking headline opens source in new tab",
+        "Results appear in chronological order (newest first)",
+        "Search filters mock data by team name match in headline, snippet, or relatedTeams",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Show loading and empty states",
+      "description": "As a user, I want clear feedback when searching so I know the system is working.",
+      "acceptanceCriteria": [
+        "Loading spinner appears while filtering results (simulate 300ms delay)",
+        "Empty state message when no results: 'No news found for [query]. Try a different search.'",
+        "Error state if something fails: 'Unable to load news. Please try again.'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
