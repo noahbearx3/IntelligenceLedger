@@ -921,34 +921,38 @@ export default function App() {
 
             {/* News Intelligence Section */}
             {newsSearchActive && (
-              <div className="rounded-xl border border-border bg-card p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold">
-                    🔍 Intelligence Feed: {selectedTeam}
+              <div className="space-y-4">
+                {/* Section Header */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+                    Intelligence Feed
                   </h3>
-                  <span className="text-xs text-muted">Auto-updating</span>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                    <span className="text-xs text-text-muted">Live</span>
+                  </div>
                 </div>
 
                 {/* Loading State */}
                 {newsLoading && (
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-                    <span className="mt-3 text-sm text-muted">Scanning sources & generating insights...</span>
+                  <div className="flex flex-col items-center justify-center py-12 rounded-xl bg-ink">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                    <span className="mt-4 text-sm text-text-muted">Scanning sources...</span>
                   </div>
                 )}
 
                 {/* Error State */}
                 {newsError && !newsLoading && (
-                  <div className="rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-sm text-danger">
+                  <div className="rounded-xl bg-danger-muted border-l-4 border-danger px-4 py-3 text-sm text-danger">
                     {newsError}
                   </div>
                 )}
 
                 {/* Empty State */}
                 {!newsLoading && !newsError && newsResults.length === 0 && (
-                  <div className="text-center py-8 text-muted">
-                    <p>No news found for "{newsSearchQuery}".</p>
-                    <p className="text-xs mt-1">Try a different search term.</p>
+                  <div className="text-center py-12 rounded-xl bg-ink">
+                    <p className="text-text-secondary">No news found for "{newsSearchQuery}"</p>
+                    <p className="text-xs text-text-muted mt-1">Try a different search term</p>
                   </div>
                 )}
 
@@ -957,50 +961,54 @@ export default function App() {
                   <div className="space-y-4">
                     {/* AI Summary Card */}
                     {aiSummary && (
-                      <div className="rounded-lg bg-gradient-to-r from-accent/10 to-accent-2/10 border border-accent/30 p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-semibold text-accent">AI SUMMARY</span>
-                          <span className="text-xs text-muted">• Beta</span>
+                      <div className="rounded-xl bg-ink border-l-4 border-accent p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xs font-bold uppercase tracking-wider text-accent">AI Brief</span>
+                          <span className="rounded bg-accent/20 px-1.5 py-0.5 text-[10px] font-medium text-accent">Beta</span>
                         </div>
-                        <p className="text-sm text-slate-300 whitespace-pre-line">
+                        <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
                           {aiSummary}
                         </p>
                       </div>
                     )}
 
                     {/* Results List */}
-                    <div className="space-y-3">
-                      {newsResults.map((article) => (
+                    <div className="space-y-2">
+                      {newsResults.map((article, idx) => (
                         <article
                           key={article.id}
-                          className="rounded-lg border border-border bg-ink p-4 hover:border-accent/50 transition-colors"
+                          className={`group rounded-xl p-4 transition-all duration-150 hover:bg-surface-elevated ${
+                            idx % 2 === 0 ? 'bg-ink' : 'bg-surface'
+                          }`}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <a
-                              href={article.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-semibold text-sm hover:text-accent transition-colors"
-                            >
-                              {article.headline}
-                            </a>
-                            <span
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                                sourceColors[article.source] || "bg-slate-500/20 text-slate-400"
-                              }`}
-                            >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <a
+                                href={article.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-semibold text-sm text-text-primary hover:text-accent transition-colors line-clamp-2"
+                              >
+                                {article.headline}
+                              </a>
+                              <p className="mt-1.5 text-xs text-text-muted line-clamp-2">
+                                {article.snippet.length > 140
+                                  ? article.snippet.slice(0, 140) + "..."
+                                  : article.snippet}
+                              </p>
+                            </div>
+                            <span className="shrink-0 rounded-md bg-surface-elevated px-2 py-1 text-[10px] font-medium text-text-muted uppercase tracking-wide">
                               {article.source}
                             </span>
                           </div>
-                          <p className="mt-2 text-xs text-slate-400 line-clamp-2">
-                            {article.snippet.length > 150
-                              ? article.snippet.slice(0, 150) + "..."
-                              : article.snippet}
-                          </p>
-                          <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+                          <div className="mt-2 flex items-center gap-3 text-xs text-text-muted">
                             <span>{formatRelativeTime(article.timestamp)}</span>
-                            <span>•</span>
-                            <span>{article.relatedTeams.join(", ")}</span>
+                            {article.relatedTeams?.length > 0 && (
+                              <>
+                                <span className="text-border">•</span>
+                                <span>{article.relatedTeams.join(", ")}</span>
+                              </>
+                            )}
                           </div>
                         </article>
                       ))}
@@ -1010,54 +1018,53 @@ export default function App() {
               </div>
             )}
 
-            <div className="grid gap-5 lg:grid-cols-3">
-              <article className="rounded-xl border border-border bg-card p-5">
-                <h3 className="text-base font-semibold">RSS Aggregator</h3>
-                <ul className="mt-4 space-y-3 text-sm">
+            <div className="grid gap-4 lg:grid-cols-3">
+              <article className="rounded-xl bg-ink p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4">RSS Feed</h3>
+                <ul className="space-y-3">
                   {rssItems.map((item) => (
-                    <li key={item.label}>
-                      <span className="font-semibold">{item.label}:</span>{" "}
-                      {item.detail}
+                    <li key={item.label} className="text-sm">
+                      <span className="font-medium text-text-primary">{item.label}</span>
+                      <p className="text-text-muted text-xs mt-0.5">{item.detail}</p>
                     </li>
                   ))}
                 </ul>
               </article>
-              <article className="rounded-xl border border-border bg-card p-5">
-                <h3 className="text-base font-semibold">Sentiment Heat Map</h3>
-                <div className="mt-4 space-y-3">
-                  <div className="h-4 overflow-hidden rounded-full border border-border bg-ink">
+              <article className="rounded-xl bg-ink p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4">Sentiment</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-2xl font-bold text-accent">{Math.round(sentiment)}%</span>
+                    <span className="text-xs text-text-muted">Bullish</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface">
                     <div
-                      className="h-full bg-gradient-to-r from-accent to-accent-2 transition-all duration-500"
+                      className="h-full bg-accent transition-all duration-500"
                       style={{ width: `${sentiment}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-muted">
-                    <span>Bullish</span>
-                    <span>Neutral</span>
-                    <span>Bearish</span>
-                  </div>
-                  <p className="text-xs text-muted">
-                    Weighted by verified analyst ROI. Scans X and Reddit every 15
-                    minutes to estimate public lean.
+                  <p className="text-xs text-text-muted leading-relaxed">
+                    Weighted by verified analyst ROI. Scans X and Reddit every 15 min.
                   </p>
                 </div>
               </article>
-              <article className="rounded-xl border border-border bg-card p-5">
-                <h3 className="text-base font-semibold">Tidbit Feed</h3>
-                <ul className="mt-4 space-y-3 text-sm">
+              <article className="rounded-xl bg-ink p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4">Tidbits</h3>
+                <ul className="space-y-2">
                   {tidbits.map((tidbit) => (
                     <li
                       key={`${tidbit.text}-${tidbit.votes}`}
-                      className="flex items-start justify-between gap-3"
+                      className="flex items-start justify-between gap-3 rounded-lg bg-surface p-3"
                     >
-                      <span>{tidbit.text}</span>
-                      <button className="rounded-full border border-border px-3 py-1 text-xs">
-                        ▲ {tidbit.votes}
+                      <span className="text-sm text-text-secondary">{tidbit.text}</span>
+                      <button className="shrink-0 flex items-center gap-1 rounded-md bg-surface-elevated px-2 py-1 text-xs text-text-muted hover:text-accent transition-colors">
+                        <span>▲</span>
+                        <span className="font-mono">{tidbit.votes}</span>
                       </button>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4 flex flex-wrap gap-3">
+                <div className="mt-4 flex gap-2">
                   <input
                     value={tidbitInput}
                     onChange={(event) => setTidbitInput(event.target.value)}
@@ -1067,19 +1074,16 @@ export default function App() {
                         handleAddTidbit();
                       }
                     }}
-                    className="flex-1 rounded-xl border border-border bg-ink px-4 py-2 text-sm"
-                    placeholder="Add a verified tidbit..."
+                    className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
+                    placeholder="Add intel..."
                   />
                   <button
-                    className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink hover:bg-accent-hover transition-colors"
                     onClick={handleAddTidbit}
                   >
                     Post
                   </button>
                 </div>
-                <p className="mt-3 text-xs text-muted">
-                  Tidbits marked as verified receive a badge and higher ranking.
-                </p>
               </article>
             </div>
           </div>
