@@ -8,7 +8,8 @@
  */
 
 const API_KEY = import.meta.env.VITE_FOOTBALL_API_KEY;
-const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
+// API-Sports direct endpoint (not RapidAPI)
+const BASE_URL = "https://v3.football.api-sports.io";
 
 // Check if API is configured
 export const hasApiKey = !!API_KEY;
@@ -115,8 +116,7 @@ async function apiRequest(endpoint) {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "GET",
       headers: {
-        "X-RapidAPI-Key": API_KEY,
-        "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com",
+        "x-apisports-key": API_KEY,
       },
     });
 
