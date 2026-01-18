@@ -4,7 +4,7 @@ import { getOdds, SPORTS, BOOKMAKERS, formatOdds, findBestOdds } from "./service
 import { TEAMS_BY_LEAGUE, FEATURED_TEAMS, ALL_TEAMS, findTeam, getLeagueForTeam, getLogoUrl } from "./data/teams";
 import { PLAYERS_BY_LEAGUE, FEATURED_PLAYERS, ALL_PLAYERS, findPlayer, getLeagueForPlayer, getHeadshotUrl, FALLBACK_HEADSHOT, POSITION_COLORS } from "./data/players";
 import { ANALYSTS, getAnalystById, getTopAnalysts, formatStreak, formatWinRate, formatROI, formatFollowers, SPECIALTY_COLORS, COMMENTS, REACTIONS, REACTION_TYPES, getCommentsForPick, getReactionsForPick } from "./data/analysts";
-import SofaScoreWidget, { SOFASCORE_TEAM_IDS } from "./components/SofaScoreWidget";
+import SofaScoreWidget, { SOFASCORE_TEAM_IDS, SofaScoreSection } from "./components/SofaScoreWidget";
 
 const rssItems = [
   {
@@ -1036,28 +1036,9 @@ export default function App() {
                   );
                 })()}
 
-                {/* SofaScore Widget - Match & Form Data */}
+                {/* SofaScore Widgets - Match Data, Lineups, H2H, Injuries */}
                 {SOFASCORE_TEAM_IDS[selectedTeam] && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-                        Live Match Data
-                      </h3>
-                      <a 
-                        href={`https://www.sofascore.com/team/football/${SOFASCORE_TEAM_IDS[selectedTeam]}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-accent hover:underline"
-                      >
-                        View on SofaScore →
-                      </a>
-                    </div>
-                    <SofaScoreWidget 
-                      teamName={selectedTeam}
-                      type="team"
-                      height={350}
-                    />
-                  </div>
+                  <SofaScoreSection teamName={selectedTeam} />
                 )}
               </>
             ) : (

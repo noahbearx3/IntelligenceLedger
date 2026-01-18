@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 /**
  * SofaScore Widget Component
@@ -111,6 +111,7 @@ export function getSofaScoreUrl(type, id, options = {}) {
 
 /**
  * SofaScore Widget Embed Component
+ * Handles 404s and missing data gracefully by hiding the widget
  */
 export default function SofaScoreWidget({ 
   type = "team", 
@@ -120,15 +121,19 @@ export default function SofaScoreWidget({
   matchId,
   playerId,
   height = 400,
-  className = ""
+  className = "",
+  onError,
+  showFallback = true
 }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   // Resolve ID from team name if not provided
   const resolvedId = teamId || SOFASCORE_TEAM_IDS[teamName] || leagueId || matchId || playerId;
 
   if (!resolvedId) {
+    if (!showFallback) return null;
     return (
       <div className={`rounded-xl bg-ink border border-border p-4 ${className}`}>
         <p className="text-sm text-text-muted text-center">
@@ -159,8 +164,52 @@ export default function SofaScoreWidget({
     case "teamForm":
       embedUrl = `https://widgets.sofascore.com/embed/team/${resolvedId}?theme=dark&widgetType=form`;
       break;
+    case "h2h":
+      embedUrl = `https://widgets.sofascore.com/embed/team/${resolvedId}?theme=dark&widgetType=h2h`;
+      break;
+    case "lineup":
+      embedUrl = `https://widgets.sofascore.com/embed/team/${resolvedId}?theme=dark&widgetType=lineup`;
+      break;
+    case "injuries":
+      embedUrl = `https://widgets.sofascore.com/embed/team/${resolvedId}?theme=dark&widgetType=injuries`;
+      break;
     default:
       embedUrl = `https://widgets.sofascore.com/embed/team/${resolvedId}?theme=dark`;
+  }
+
+  // Handle iframe load - check for 404/empty content
+  const handleLoad = (e) => {
+    setLoading(false);
+    
+    // Try to detect if iframe loaded empty/404 content
+    try {
+      const iframe = e.target;
+      // Check if iframe has minimal height (indicates no content)
+      setTimeout(() => {
+        if (iframe.contentWindow) {
+          // If iframe body is very short, it's likely a 404 or no data
+          const iframeHeight = iframe.clientHeight;
+          if (iframeHeight < 50) {
+            setHidden(true);
+            onError?.();
+          }
+        }
+      }, 1000);
+    } catch (err) {
+      // Cross-origin - can't check, assume it loaded
+    }
+  };
+
+  const handleError = () => {
+    setLoading(false);
+    setError(true);
+    setHidden(true);
+    onError?.();
+  };
+
+  // If hidden due to 404/no data, don't render anything
+  if (hidden) {
+    return null;
   }
 
   return (
@@ -188,16 +237,13 @@ export default function SofaScoreWidget({
           background: 'transparent',
           borderRadius: '12px'
         }}
-        onLoad={() => setLoading(false)}
-        onError={() => {
-          setLoading(false);
-          setError(true);
-        }}
+        onLoad={handleLoad}
+        onError={handleError}
         title={`SofaScore ${type} widget`}
         allow="autoplay; encrypted-media"
       />
       
-      {error && (
+      {error && showFallback && (
         <div className="p-4 text-center">
           <p className="text-sm text-text-muted">
             ⚠️ Unable to load SofaScore widget
@@ -273,5 +319,181 @@ export function StandingsWidget({ league, className = "" }) {
       height={500}
       className={className}
     />
+  );
+}
+
+/**
+ * SofaScore Section Component
+ * Displays multiple widget types with tabs for Lineups, H2H, Form, Injuries
+ */
+export function SofaScoreSection({ teamName }) {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [availableTabs, setAvailableTabs] = useState(["overview"]);
+  const teamId = SOFASCORE_TEAM_IDS[teamName];
+
+  // Reset to overview when team changes
+  useEffect(() => {
+    setActiveTab("overview");
+    setAvailableTabs(["overview"]);
+  }, [teamName]);
+
+  if (!teamId) {
+    return null;
+  }
+
+  const tabs = [
+    { id: "overview", label: "Overview", icon: "📊" },
+    { id: "matches", label: "Matches", icon: "⚽" },
+    { id: "lineup", label: "Lineup", icon: "👥" },
+    { id: "h2h", label: "H2H", icon: "⚔️" },
+    { id: "injuries", label: "Injuries", icon: "🏥" },
+  ];
+
+  // Handle widget errors - hide that tab option
+  const handleWidgetError = (tabId) => {
+    setAvailableTabs(prev => prev.filter(t => t !== tabId));
+    if (activeTab === tabId) {
+      setActiveTab("overview");
+    }
+  };
+
+  // Add tab to available when it loads successfully
+  const handleWidgetLoad = (tabId) => {
+    if (!availableTabs.includes(tabId)) {
+      setAvailableTabs(prev => [...prev, tabId]);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center gap-2">
+          <span className="text-accent">⚽</span> SofaScore Intel
+        </h3>
+        <a 
+          href={`https://www.sofascore.com/team/football/${teamId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-accent hover:underline"
+        >
+          Full Stats →
+        </a>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-lg bg-ink p-1 overflow-x-auto">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${
+              activeTab === tab.id
+                ? "bg-accent text-ink"
+                : "text-text-muted hover:text-text-primary hover:bg-surface-elevated"
+            }`}
+          >
+            <span>{tab.icon}</span>
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Widget Content */}
+      <div className="min-h-[200px]">
+        {activeTab === "overview" && (
+          <SofaScoreWidget 
+            teamId={teamId}
+            type="team"
+            height={350}
+            showFallback={true}
+          />
+        )}
+        
+        {activeTab === "matches" && (
+          <SofaScoreWidget 
+            teamId={teamId}
+            type="teamMatches"
+            height={400}
+            showFallback={true}
+          />
+        )}
+        
+        {activeTab === "lineup" && (
+          <div className="space-y-2">
+            <p className="text-xs text-text-muted px-2">
+              💡 Lineups are typically available 1 hour before kickoff
+            </p>
+            <SofaScoreWidget 
+              teamId={teamId}
+              type="lineup"
+              height={400}
+              showFallback={true}
+              onError={() => handleWidgetError("lineup")}
+            />
+          </div>
+        )}
+        
+        {activeTab === "h2h" && (
+          <div className="space-y-2">
+            <p className="text-xs text-text-muted px-2">
+              📈 Head-to-head history against upcoming opponent
+            </p>
+            <SofaScoreWidget 
+              teamId={teamId}
+              type="h2h"
+              height={350}
+              showFallback={true}
+              onError={() => handleWidgetError("h2h")}
+            />
+          </div>
+        )}
+        
+        {activeTab === "injuries" && (
+          <div className="space-y-2">
+            <p className="text-xs text-text-muted px-2">
+              🏥 Current injuries and suspensions
+            </p>
+            <SofaScoreWidget 
+              teamId={teamId}
+              type="injuries"
+              height={300}
+              showFallback={true}
+              onError={() => handleWidgetError("injuries")}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Quick Stats Bar */}
+      <div className="flex items-center justify-center gap-4 py-2 border-t border-border">
+        <a
+          href={`https://www.sofascore.com/team/football/${teamId}/matches`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-text-muted hover:text-accent transition-colors"
+        >
+          📅 Fixtures
+        </a>
+        <span className="text-border">|</span>
+        <a
+          href={`https://www.sofascore.com/team/football/${teamId}/squad`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-text-muted hover:text-accent transition-colors"
+        >
+          👥 Squad
+        </a>
+        <span className="text-border">|</span>
+        <a
+          href={`https://www.sofascore.com/team/football/${teamId}/standings`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-text-muted hover:text-accent transition-colors"
+        >
+          📊 Standings
+        </a>
+      </div>
+    </div>
   );
 }
