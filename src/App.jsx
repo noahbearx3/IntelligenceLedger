@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getIntelligence, canUseRealApi } from "./services/newsApi";
 import { getOdds, SPORTS, BOOKMAKERS, formatOdds, findBestOdds } from "./services/oddsApi";
+import { TEAMS_BY_LEAGUE, FEATURED_TEAMS, ALL_TEAMS, findTeam, getLeagueForTeam, getLogoUrl } from "./data/teams";
 
 const rssItems = [
   {
@@ -217,55 +218,6 @@ const Modal = ({ open, onClose, children, tone = "default" }) => {
     </div>
   );
 };
-
-// Organized teams by league
-const teamsByLeague = {
-  NFL: [
-    "Buffalo Bills", "Miami Dolphins", "New England Patriots", "New York Jets",
-    "Baltimore Ravens", "Cincinnati Bengals", "Cleveland Browns", "Pittsburgh Steelers",
-    "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Tennessee Titans",
-    "Denver Broncos", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers",
-    "Dallas Cowboys", "New York Giants", "Philadelphia Eagles", "Washington Commanders",
-    "Chicago Bears", "Detroit Lions", "Green Bay Packers", "Minnesota Vikings",
-    "Atlanta Falcons", "Carolina Panthers", "New Orleans Saints", "Tampa Bay Buccaneers",
-    "Arizona Cardinals", "Los Angeles Rams", "San Francisco 49ers", "Seattle Seahawks",
-  ],
-  NBA: [
-    "Boston Celtics", "Brooklyn Nets", "New York Knicks", "Philadelphia 76ers", "Toronto Raptors",
-    "Chicago Bulls", "Cleveland Cavaliers", "Detroit Pistons", "Indiana Pacers", "Milwaukee Bucks",
-    "Atlanta Hawks", "Charlotte Hornets", "Miami Heat", "Orlando Magic", "Washington Wizards",
-    "Denver Nuggets", "Minnesota Timberwolves", "Oklahoma City Thunder", "Portland Trail Blazers", "Utah Jazz",
-    "Golden State Warriors", "LA Clippers", "Los Angeles Lakers", "Phoenix Suns", "Sacramento Kings",
-    "Dallas Mavericks", "Houston Rockets", "Memphis Grizzlies", "New Orleans Pelicans", "San Antonio Spurs",
-  ],
-  NHL: [
-    "Boston Bruins", "Buffalo Sabres", "Detroit Red Wings", "Florida Panthers", "Montreal Canadiens",
-    "Ottawa Senators", "Tampa Bay Lightning", "Toronto Maple Leafs", "Carolina Hurricanes", "Columbus Blue Jackets",
-    "New Jersey Devils", "New York Islanders", "New York Rangers", "Philadelphia Flyers", "Pittsburgh Penguins",
-    "Washington Capitals", "Arizona Coyotes", "Chicago Blackhawks", "Colorado Avalanche", "Dallas Stars",
-    "Minnesota Wild", "Nashville Predators", "St. Louis Blues", "Winnipeg Jets", "Anaheim Ducks",
-    "Calgary Flames", "Edmonton Oilers", "Los Angeles Kings", "San Jose Sharks", "Seattle Kraken", "Vegas Golden Knights", "Vancouver Canucks",
-  ],
-  MLB: [
-    "New York Yankees", "Boston Red Sox", "Toronto Blue Jays", "Tampa Bay Rays", "Baltimore Orioles",
-    "Chicago White Sox", "Cleveland Guardians", "Detroit Tigers", "Kansas City Royals", "Minnesota Twins",
-    "Houston Astros", "Los Angeles Angels", "Oakland Athletics", "Seattle Mariners", "Texas Rangers",
-    "Atlanta Braves", "Miami Marlins", "New York Mets", "Philadelphia Phillies", "Washington Nationals",
-    "Chicago Cubs", "Cincinnati Reds", "Milwaukee Brewers", "Pittsburgh Pirates", "St. Louis Cardinals",
-    "Arizona Diamondbacks", "Colorado Rockies", "Los Angeles Dodgers", "San Diego Padres", "San Francisco Giants",
-  ],
-};
-
-// Flatten for backwards compatibility
-const teams = Object.values(teamsByLeague).flat();
-
-// Featured teams (trending/popular)
-const featuredTeams = [
-  { name: "Buffalo Bills", league: "NFL", trending: "🔥 Hot" },
-  { name: "Kansas City Chiefs", league: "NFL", trending: "📈 Playoff bound" },
-  { name: "Boston Celtics", league: "NBA", trending: "🏆 Title favorites" },
-  { name: "Los Angeles Dodgers", league: "MLB", trending: "⭐ Star power" },
-];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("team");
@@ -570,20 +522,39 @@ export default function App() {
             <div>
               <h3 className="text-sm font-semibold text-muted mb-3">🔥 Featured</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {featuredTeams.map((team) => (
+                {FEATURED_TEAMS.map((team) => (
                   <button
                     key={team.name}
                     onClick={() => setSelectedTeam(team.name)}
-                    className={`rounded-xl border p-3 text-left transition-all ${
+                    className={`group relative overflow-hidden rounded-xl border p-4 text-left transition-all ${
                       selectedTeam === team.name
-                        ? "border-accent bg-accent/10"
-                        : "border-border bg-card hover:border-accent/50"
+                        ? "border-white/40 ring-2 ring-white/20"
+                        : "border-white/10 hover:border-white/30"
                     }`}
+                    style={{
+                      background: `linear-gradient(135deg, ${team.primary}dd 0%, ${team.secondary}cc 100%)`,
+                    }}
                   >
-                    <div className="text-sm font-semibold truncate">{team.name}</div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-muted">{team.league}</span>
-                      <span className="text-xs">{team.trending}</span>
+                    {/* Background logo watermark */}
+                    <img
+                      src={getLogoUrl(team.abbr, team.league)}
+                      alt=""
+                      className="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:opacity-30 transition-opacity"
+                    />
+                    {/* Content */}
+                    <div className="relative z-10 flex items-start gap-2">
+                      <img
+                        src={getLogoUrl(team.abbr, team.league)}
+                        alt={team.name}
+                        className="w-8 h-8 object-contain"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-white truncate drop-shadow-md">{team.name}</div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs text-white/70 font-medium">{team.league}</span>
+                          <span className="text-xs text-white/90">{team.trending}</span>
+                        </div>
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -593,7 +564,7 @@ export default function App() {
             {/* League Filter + Team Search */}
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex gap-2">
-                {Object.keys(teamsByLeague).map((league) => (
+                {Object.keys(TEAMS_BY_LEAGUE).map((league) => (
                   <button
                     key={league}
                     onClick={() => { setSelectedLeague(league); setShowAllTeams(true); }}
@@ -620,28 +591,40 @@ export default function App() {
                 onClick={() => setShowAllTeams(!showAllTeams)}
                 className="text-xs text-accent hover:underline"
               >
-                {showAllTeams ? "Hide all" : "Browse all teams"}
+                {showAllTeams ? "Hide all" : `Browse all ${TEAMS_BY_LEAGUE[selectedLeague]?.length || 0} teams`}
               </button>
             </div>
 
             {/* All Teams Grid (expandable) */}
             {showAllTeams && (
-              <div className="rounded-xl border border-border bg-card p-4 max-h-60 overflow-y-auto">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              <div className="rounded-xl border border-border bg-card/50 p-4 max-h-80 overflow-y-auto">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                   {(teamSearch
-                    ? teams.filter(t => t.toLowerCase().includes(teamSearch.toLowerCase()))
-                    : teamsByLeague[selectedLeague] || []
+                    ? ALL_TEAMS.filter(t => t.name.toLowerCase().includes(teamSearch.toLowerCase()))
+                    : TEAMS_BY_LEAGUE[selectedLeague] || []
                   ).map((team) => (
                     <button
-                      key={team}
-                      onClick={() => { setSelectedTeam(team); setShowAllTeams(false); setTeamSearch(""); }}
-                      className={`rounded-lg px-3 py-2 text-xs text-left truncate transition-colors ${
-                        selectedTeam === team
-                          ? "bg-accent text-ink font-semibold"
-                          : "bg-ink border border-border hover:border-accent"
+                      key={team.name}
+                      onClick={() => { setSelectedTeam(team.name); setShowAllTeams(false); setTeamSearch(""); }}
+                      className={`group relative overflow-hidden rounded-lg p-2 text-left transition-all ${
+                        selectedTeam === team.name
+                          ? "ring-2 ring-white/40"
+                          : "hover:ring-1 hover:ring-white/20"
                       }`}
+                      style={{
+                        background: `linear-gradient(135deg, ${team.primary}bb 0%, ${team.secondary}99 100%)`,
+                      }}
                     >
-                      {team}
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={getLogoUrl(team.abbr, getLeagueForTeam(team.name))}
+                          alt=""
+                          className="w-6 h-6 object-contain"
+                        />
+                        <span className="text-xs font-medium text-white truncate drop-shadow-sm">
+                          {team.name}
+                        </span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -649,20 +632,51 @@ export default function App() {
             )}
 
             {/* Current Selection */}
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-accent/30 bg-accent/5 p-4">
-              <div>
-                <div className="text-xs text-muted">Currently viewing</div>
-                <div className="text-lg font-semibold">{selectedTeam}</div>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full bg-accent/15 px-3 py-1 text-accent">
-                  {Object.entries(teamsByLeague).find(([_, teams]) => teams.includes(selectedTeam))?.[0] || "NFL"}
-                </span>
-                <span className="rounded-full bg-accent-2/15 px-3 py-1 text-accent-2">
-                  2025 Season
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const team = findTeam(selectedTeam);
+              const league = getLeagueForTeam(selectedTeam);
+              if (!team) return null;
+              return (
+                <div 
+                  className="relative overflow-hidden rounded-xl p-4"
+                  style={{
+                    background: `linear-gradient(135deg, ${team.primary}40 0%, ${team.secondary}30 100%)`,
+                    borderLeft: `4px solid ${team.primary}`,
+                  }}
+                >
+                  {/* Background watermark */}
+                  <img
+                    src={getLogoUrl(team.abbr, league)}
+                    alt=""
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 opacity-15"
+                  />
+                  <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={getLogoUrl(team.abbr, league)}
+                        alt={team.name}
+                        className="w-12 h-12 object-contain"
+                      />
+                      <div>
+                        <div className="text-xs text-muted">Currently viewing</div>
+                        <div className="text-xl font-bold text-white">{selectedTeam}</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span 
+                        className="rounded-full px-3 py-1 font-semibold"
+                        style={{ backgroundColor: team.primary, color: '#fff' }}
+                      >
+                        {league}
+                      </span>
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-white/80">
+                        2025 Season
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* News Search Input */}
             <div className="flex gap-3">
