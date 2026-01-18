@@ -1,23 +1,19 @@
 /**
  * Match Data API Service
- * Uses API-Football (RapidAPI) for lineups, H2H, fixtures, standings
- * Falls back to mock data when API is unavailable
- * 
- * API-Football Free Tier: 100 requests/day
- * Docs: https://www.api-football.com/documentation-v3
+ * Uses Flashscore Scraper API for real-time football data
+ * Falls back to mock data when scraper is unavailable
  */
 
-const API_KEY = import.meta.env.VITE_FOOTBALL_API_KEY;
-// API-Sports direct endpoint (not RapidAPI)
-const BASE_URL = "https://v3.football.api-sports.io";
+// Scraper API endpoint (Vercel serverless function)
+const SCRAPER_URL = "/api/scrape";
 
-// Check if API is configured
-export const hasApiKey = !!API_KEY;
+// Check if we're in production (scraper available)
+export const hasApiKey = true; // Scraper doesn't need API key
 
 // ==================== CACHING LAYER ====================
-// Cache API responses for 10 minutes to minimize requests
+// Cache API responses for 5 minutes to reduce scraper load
 const cache = new Map();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function getCached(key) {
   const item = cache.get(key);
@@ -33,119 +29,110 @@ function setCache(key, data) {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-// Track API usage for debugging
-let apiCallsThisSession = 0;
+// Track scraper calls for debugging
+let scraperCallsThisSession = 0;
 export function getApiCallCount() {
-  return apiCallsThisSession;
+  return scraperCallsThisSession;
 }
 
-// Team ID mappings for API-Football
+// Team name mappings (for display purposes)
 export const TEAM_IDS = {
   // Premier League
-  "Liverpool": 40,
-  "Arsenal": 42,
-  "Manchester City": 50,
-  "Manchester United": 33,
-  "Chelsea": 49,
-  "Tottenham": 47,
-  "Newcastle United": 34,
-  "Aston Villa": 66,
-  "Brighton": 51,
-  "West Ham": 48,
-  "Everton": 45,
-  "Nottingham Forest": 65,
-  "Fulham": 36,
-  "Brentford": 55,
-  "Crystal Palace": 52,
-  "Bournemouth": 35,
-  "Wolves": 39,
-  "Leicester City": 46,
-  "Ipswich Town": 57,
-  "Southampton": 41,
+  "Liverpool": "liverpool",
+  "Arsenal": "arsenal",
+  "Manchester City": "manchester-city",
+  "Manchester United": "manchester-united",
+  "Chelsea": "chelsea",
+  "Tottenham": "tottenham",
+  "Newcastle United": "newcastle-utd",
+  "Aston Villa": "aston-villa",
+  "Brighton": "brighton",
+  "West Ham": "west-ham",
+  "Everton": "everton",
+  "Nottingham Forest": "nottingham-forest",
+  "Fulham": "fulham",
+  "Brentford": "brentford",
+  "Crystal Palace": "crystal-palace",
+  "Bournemouth": "bournemouth",
+  "Wolves": "wolverhampton",
+  "Leicester City": "leicester",
+  "Ipswich Town": "ipswich",
+  "Southampton": "southampton",
   
   // La Liga
-  "Real Madrid": 541,
-  "Barcelona": 529,
-  "Atlético Madrid": 530,
-  "Athletic Bilbao": 531,
-  "Real Sociedad": 548,
-  "Villarreal": 533,
-  "Real Betis": 543,
-  "Sevilla": 536,
-  "Valencia": 532,
-  "Girona": 547,
+  "Real Madrid": "real-madrid",
+  "Barcelona": "barcelona",
+  "Atlético Madrid": "atletico-madrid",
+  "Athletic Bilbao": "athletic-bilbao",
+  "Real Sociedad": "real-sociedad",
+  "Villarreal": "villarreal",
+  "Real Betis": "real-betis",
+  "Sevilla": "sevilla",
+  "Valencia": "valencia",
+  "Girona": "girona",
   
   // MLS
-  "Inter Miami": 9568,
-  "LA Galaxy": 1600,
-  "LAFC": 1599,
-  "Atlanta United": 1596,
-  "Seattle Sounders": 1595,
-  "Columbus Crew": 1604,
+  "Inter Miami": "inter-miami",
+  "LA Galaxy": "la-galaxy",
+  "LAFC": "los-angeles-fc",
+  "Atlanta United": "atlanta-united",
+  "Seattle Sounders": "seattle-sounders",
+  "Columbus Crew": "columbus-crew",
 };
 
 // League IDs
 export const LEAGUE_IDS = {
-  "EPL": 39,
-  "La Liga": 140,
-  "Bundesliga": 78,
-  "Serie A": 135,
-  "Ligue 1": 61,
-  "MLS": 253,
+  "EPL": "england/premier-league",
+  "La Liga": "spain/laliga",
+  "Bundesliga": "germany/bundesliga",
+  "Serie A": "italy/serie-a",
+  "Ligue 1": "france/ligue-1",
+  "MLS": "usa/mls",
 };
 
 /**
- * Make API request with proper headers + caching
+ * Call the scraper API
  */
-async function apiRequest(endpoint) {
-  if (!API_KEY) {
-    console.warn("⚠️ VITE_FOOTBALL_API_KEY not configured, using mock data");
-    console.warn("Key value:", API_KEY);
-    return null;
-  }
-
+async function callScraper(type, params) {
+  const cacheKey = `${type}:${JSON.stringify(params)}`;
+  
   // Check cache first
-  const cached = getCached(endpoint);
+  const cached = getCached(cacheKey);
   if (cached) {
-    console.log(`📦 Cache hit: ${endpoint}`);
+    console.log(`📦 Cache hit: ${cacheKey}`);
     return cached;
   }
 
   try {
-    const url = `${BASE_URL}${endpoint}`;
-    console.log(`🌐 API call #${++apiCallsThisSession}: ${url}`);
-    console.log(`🔑 Using key: ${API_KEY.substring(0, 8)}...`);
+    console.log(`🔍 Scraper call #${++scraperCallsThisSession}: ${type}`, params);
     
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "x-apisports-key": API_KEY,
-      },
+    const response = await fetch(SCRAPER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, ...params }),
     });
-
-    console.log(`📡 Response status: ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ API-Football error:", response.status, errorText);
+      console.error("❌ Scraper error:", response.status, errorText);
       return null;
     }
 
-    const data = await response.json();
-    console.log(`✅ API response:`, data);
+    const result = await response.json();
     
-    // Check for API errors in response
-    if (data.errors && Object.keys(data.errors).length > 0) {
-      console.error("❌ API returned errors:", data.errors);
+    if (!result.success) {
+      console.error("❌ Scraper returned error:", result.error);
       return null;
     }
+
+    console.log(`✅ Scraper response:`, result.data);
     
     // Cache the response
-    setCache(endpoint, data.response);
+    setCache(cacheKey, result.data);
     
-    return data.response;
+    return result.data;
   } catch (error) {
-    console.error("❌ API-Football fetch error:", error);
+    console.error("❌ Scraper fetch error:", error);
     return null;
   }
 }
@@ -154,34 +141,26 @@ async function apiRequest(endpoint) {
  * Get team's next fixture
  */
 export async function getNextFixture(teamName) {
-  const teamId = TEAM_IDS[teamName];
-  if (!teamId) {
-    console.log(`⚠️ No team ID for ${teamName}, using mock fixture`);
+  if (!TEAM_IDS[teamName]) {
+    console.log(`⚠️ Unknown team: ${teamName}, using mock`);
     return getMockNextFixture(teamName);
   }
 
-  const data = await apiRequest(`/fixtures?team=${teamId}&next=1`);
-  if (!data || data.length === 0) {
-    console.log(`⚠️ No upcoming fixtures from API for ${teamName}, using mock`);
+  const data = await callScraper("team", { teamName });
+  
+  if (!data || !data.nextFixture) {
+    console.log(`⚠️ No fixture from scraper for ${teamName}, using mock`);
     return getMockNextFixture(teamName);
   }
 
-  console.log(`✅ Got REAL fixture for ${teamName}:`, data[0]);
-  const fixture = data[0];
   return {
-    id: fixture.fixture.id,
-    date: fixture.fixture.date,
-    venue: fixture.fixture.venue?.name,
-    home: {
-      name: fixture.teams.home.name,
-      logo: fixture.teams.home.logo,
-    },
-    away: {
-      name: fixture.teams.away.name,
-      logo: fixture.teams.away.logo,
-    },
-    league: fixture.league.name,
-    round: fixture.league.round,
+    id: Date.now(),
+    date: data.nextFixture.time,
+    venue: "TBD",
+    home: { name: data.nextFixture.home, logo: null },
+    away: { name: data.nextFixture.away, logo: null },
+    league: "League",
+    round: "",
   };
 }
 
@@ -189,167 +168,83 @@ export async function getNextFixture(teamName) {
  * Get team's recent results (last 5)
  */
 export async function getTeamForm(teamName) {
-  const teamId = TEAM_IDS[teamName];
-  if (!teamId) {
-    console.log(`⚠️ No team ID for ${teamName}, using mock form`);
+  if (!TEAM_IDS[teamName]) {
+    console.log(`⚠️ Unknown team: ${teamName}, using mock form`);
     return getMockTeamForm(teamName);
   }
 
-  const data = await apiRequest(`/fixtures?team=${teamId}&last=5`);
+  const data = await callScraper("form", { teamName });
+  
   if (!data || data.length === 0) {
-    console.log(`⚠️ No recent fixtures from API for ${teamName}, using mock form`);
+    console.log(`⚠️ No form from scraper for ${teamName}, using mock`);
     return getMockTeamForm(teamName);
   }
 
-  console.log(`✅ Got REAL form for ${teamName}: ${data.length} matches`);
-  return data.map(fixture => ({
-    id: fixture.fixture.id,
-    date: fixture.fixture.date,
-    home: fixture.teams.home.name,
-    away: fixture.teams.away.name,
-    homeGoals: fixture.goals.home,
-    awayGoals: fixture.goals.away,
-    result: getResultForTeam(teamName, fixture),
+  return data.map((match, i) => ({
+    id: i,
+    date: match.date || new Date().toISOString(),
+    home: match.home,
+    away: match.away,
+    homeGoals: match.homeGoals,
+    awayGoals: match.awayGoals,
+    result: match.result || "D",
   }));
 }
 
 /**
- * Get lineup for a fixture
+ * Get lineup for a fixture (not available via scraper yet)
  */
 export async function getLineup(fixtureId) {
-  if (!fixtureId) return getMockLineup();
-
-  const data = await apiRequest(`/fixtures/lineups?fixture=${fixtureId}`);
-  if (!data || data.length === 0) return getMockLineup();
-
-  return data.map(team => ({
-    team: team.team.name,
-    logo: team.team.logo,
-    formation: team.formation,
-    startXI: team.startXI.map(p => ({
-      name: p.player.name,
-      number: p.player.number,
-      pos: p.player.pos,
-    })),
-    substitutes: team.substitutes.slice(0, 7).map(p => ({
-      name: p.player.name,
-      number: p.player.number,
-      pos: p.player.pos,
-    })),
-    coach: team.coach?.name,
-  }));
+  // Lineups require real-time data closer to match - use mock for now
+  return getMockLineup();
 }
 
 /**
- * Get head-to-head history
+ * Get head-to-head history (use mock for now)
  */
 export async function getH2H(team1Name, team2Name) {
-  const team1Id = TEAM_IDS[team1Name];
-  const team2Id = TEAM_IDS[team2Name];
-  
-  if (!team1Id || !team2Id) return getMockH2H(team1Name, team2Name);
-
-  const data = await apiRequest(`/fixtures/headtohead?h2h=${team1Id}-${team2Id}&last=5`);
-  if (!data || data.length === 0) return getMockH2H(team1Name, team2Name);
-
-  return {
-    matches: data.map(fixture => ({
-      date: fixture.fixture.date,
-      home: fixture.teams.home.name,
-      away: fixture.teams.away.name,
-      homeGoals: fixture.goals.home,
-      awayGoals: fixture.goals.away,
-    })),
-    stats: calculateH2HStats(data, team1Name),
-  };
+  // H2H requires specific match history scraping - use mock for now
+  return getMockH2H(team1Name, team2Name);
 }
 
 /**
- * Get team injuries
+ * Get team injuries (not easily available via scraper)
  */
 export async function getInjuries(teamName) {
-  const teamId = TEAM_IDS[teamName];
-  if (!teamId) {
-    console.log(`⚠️ No team ID for ${teamName}, using mock injuries`);
-    return getMockInjuries(teamName);
-  }
-
-  const data = await apiRequest(`/injuries?team=${teamId}&season=2025`);
-  if (!data || data.length === 0) {
-    console.log(`⚠️ No injuries from API for ${teamName} (could mean no injuries!)`);
-    return []; // Return empty - no injuries is good news!
-  }
-
-  console.log(`✅ Got REAL injuries for ${teamName}: ${data.length} players`);
-  return data.slice(0, 8).map(injury => ({
-    player: injury.player.name,
-    photo: injury.player.photo,
-    type: injury.player.type,
-    reason: injury.player.reason,
-  }));
+  // Injuries are hard to scrape reliably - return empty (no injuries)
+  return [];
 }
 
 /**
  * Get league standings
  */
 export async function getStandings(league) {
-  const leagueId = LEAGUE_IDS[league];
-  if (!leagueId) {
-    console.log(`⚠️ No league ID for ${league}, using mock standings`);
+  if (!LEAGUE_IDS[league]) {
+    console.log(`⚠️ Unknown league: ${league}, using mock standings`);
     return getMockStandings(league);
   }
 
-  const data = await apiRequest(`/standings?league=${leagueId}&season=2025`);
+  const data = await callScraper("standings", { league });
+  
   if (!data || data.length === 0) {
-    console.log(`⚠️ No standings from API for ${league}, using mock`);
+    console.log(`⚠️ No standings from scraper for ${league}, using mock`);
     return getMockStandings(league);
   }
 
-  const standings = data[0]?.league?.standings?.[0];
-  if (!standings) {
-    console.log(`⚠️ Standings format unexpected for ${league}, using mock`);
-    return getMockStandings(league);
-  }
-
-  console.log(`✅ Got REAL standings for ${league}: ${standings.length} teams`);
-  return standings.slice(0, 10).map(team => ({
+  return data.slice(0, 20).map(team => ({
     rank: team.rank,
-    name: team.team.name,
-    logo: team.team.logo,
-    played: team.all.played,
-    won: team.all.win,
-    drawn: team.all.draw,
-    lost: team.all.lose,
-    gf: team.all.goals.for,
-    ga: team.all.goals.against,
-    gd: team.goalsDiff,
+    name: team.name,
+    logo: null,
+    played: team.played,
+    won: team.won,
+    drawn: team.drawn,
+    lost: team.lost,
+    gf: team.gf,
+    ga: team.ga,
+    gd: team.gd,
     points: team.points,
-    form: team.form,
+    form: "",
   }));
-}
-
-// Helper functions
-function getResultForTeam(teamName, fixture) {
-  const isHome = fixture.teams.home.name === teamName;
-  const teamGoals = isHome ? fixture.goals.home : fixture.goals.away;
-  const oppGoals = isHome ? fixture.goals.away : fixture.goals.home;
-  
-  if (teamGoals > oppGoals) return "W";
-  if (teamGoals < oppGoals) return "L";
-  return "D";
-}
-
-function calculateH2HStats(matches, teamName) {
-  let wins = 0, draws = 0, losses = 0;
-  
-  matches.forEach(m => {
-    const result = getResultForTeam(teamName, m);
-    if (result === "W") wins++;
-    else if (result === "D") draws++;
-    else losses++;
-  });
-  
-  return { wins, draws, losses, total: matches.length };
 }
 
 // ==================== MOCK DATA ====================
@@ -430,15 +325,6 @@ function getMockH2H(team1, team2) {
     ],
     stats: { wins: 3, draws: 1, losses: 1, total: 5 },
   };
-}
-
-function getMockInjuries(teamName) {
-  const injuries = [
-    { player: "Key Player 1", type: "Missing Fixture", reason: "Hamstring" },
-    { player: "Key Player 2", type: "Doubtful", reason: "Knock" },
-    { player: "Key Player 3", type: "Missing Fixture", reason: "Red Card Suspension" },
-  ];
-  return injuries;
 }
 
 function getMockStandings(league) {
