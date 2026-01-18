@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing articles or teamName' });
   }
 
-  const OPENAI_KEY = process.env.VITE_OPENAI_KEY;
+  const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_KEY;
 
   if (!OPENAI_KEY) {
     return res.status(500).json({ error: 'OpenAI key not configured' });
