@@ -459,28 +459,33 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-ink text-slate-200">
-      <header className="sticky top-0 z-20 border-b border-border bg-ink/95">
-        <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-5 md:px-12">
-          <div className="flex items-center gap-4">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-2 font-bold text-ink">
+      <header className="sticky top-0 z-20 border-b border-border/50 bg-ink/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-8xl items-center justify-between gap-4 px-6 py-4 md:px-8">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent font-display text-lg font-bold text-ink">
               IL
-            </span>
+            </div>
             <div>
-              <h1 className="text-xl font-semibold">The Intelligence Ledger</h1>
-              <p className="text-sm text-muted">
-                Social intelligence for sports betting
+              <h1 className="font-display text-lg font-bold tracking-tight text-text-primary">
+                Intelligence Ledger
+              </h1>
+              <p className="text-xs text-text-muted">
+                Sports betting intelligence
               </p>
             </div>
           </div>
-          <nav className="flex gap-3">
+
+          {/* Nav */}
+          <nav className="flex items-center gap-3">
             {isLoggedIn ? (
               <>
-                <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs text-muted">
-                  <span className="h-2 w-2 rounded-full bg-accent-2" />
+                <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
                   {loginName}
                 </div>
                 <button
-                  className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink transition-all hover:bg-accent-hover hover:shadow-glow-sm"
                   onClick={() => setPickOpen(true)}
                 >
                   Post Pick
@@ -489,13 +494,13 @@ export default function App() {
             ) : (
               <>
                 <button
-                  className="rounded-xl border border-border px-4 py-2 text-sm"
+                  className="rounded-lg px-4 py-2 text-sm text-text-secondary transition-colors hover:text-text-primary"
                   onClick={() => setLoginOpen(true)}
                 >
                   Log In
                 </button>
-                <button className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink">
-                  Request Access
+                <button className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink transition-all hover:bg-accent-hover hover:shadow-glow-sm">
+                  Get Access
                 </button>
               </>
             )}
@@ -503,26 +508,31 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex flex-col gap-6 px-6 py-8 md:px-12 md:py-10">
-        <section className="rounded-xl border border-border bg-panel">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-            <h2 className="text-lg font-semibold">Team/Player DNA</h2>
-            <div className="flex gap-2">
-              {["team", "player"].map((tab) => (
-                <button
-                  key={tab}
-                  className={`rounded-full border px-4 py-1 text-sm ${
-                    activeTab === tab
-                      ? "border-transparent bg-accent text-ink"
-                      : "border-border"
-                  }`}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab === "team" ? "Team" : "Player"}
-                </button>
-              ))}
-            </div>
-          </div>
+      <main className="mx-auto max-w-8xl px-6 py-8 md:px-8 md:py-10">
+        {/* Dashboard Grid */}
+        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+          {/* Main Content */}
+          <div className="space-y-6">
+            {/* Team/Player DNA Section */}
+            <section className="rounded-2xl border border-border bg-surface">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-6 py-4">
+                <h2 className="font-display text-lg font-bold text-text-primary">Research Hub</h2>
+                <div className="flex gap-1 rounded-lg bg-ink p-1">
+                  {["team", "player"].map((tab) => (
+                    <button
+                      key={tab}
+                      className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+                        activeTab === tab
+                          ? "bg-accent text-ink shadow-sm"
+                          : "text-text-muted hover:text-text-primary"
+                      }`}
+                      onClick={() => setActiveTab(tab)}
+                    >
+                      {tab === "team" ? "Teams" : "Players"}
+                    </button>
+                  ))}
+                </div>
+              </div>
           <div className="space-y-6 px-6 py-6">
             {activeTab === "team" ? (
               <>
@@ -1074,71 +1084,145 @@ export default function App() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-border bg-panel">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-            <h2 className="text-lg font-semibold">Immutable Ledger</h2>
-            <span className="rounded-full bg-accent-2/15 px-3 py-1 text-xs text-accent-2">
-              Verified Analyst: 0% hidden picks
-            </span>
+        {/* Ledger Section */}
+            <section className="rounded-2xl border border-border bg-surface">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-6 py-4">
+                <h2 className="font-display text-lg font-bold text-text-primary">Pick Ledger</h2>
+                <span className="flex items-center gap-1.5 rounded-full bg-success-muted px-3 py-1 text-xs font-medium text-success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  100% Transparent
+                </span>
+              </div>
+              <div className="space-y-6 p-6">
+                {/* Stats Row */}
+                <div className="grid gap-4 sm:grid-cols-4">
+                  <div className="rounded-xl bg-ink p-4">
+                    <p className="font-mono text-2xl font-bold text-accent">+18.4</p>
+                    <p className="text-xs text-text-muted">Units (90d)</p>
+                  </div>
+                  <div className="rounded-xl bg-ink p-4">
+                    <p className="font-mono text-2xl font-bold text-text-primary">61-47</p>
+                    <p className="text-xs text-text-muted">Win/Loss</p>
+                  </div>
+                  <div className="rounded-xl bg-ink p-4">
+                    <p className="font-mono text-2xl font-bold text-text-primary">56.5%</p>
+                    <p className="text-xs text-text-muted">Win Rate</p>
+                  </div>
+                  <div className="flex items-center justify-center rounded-xl border border-border bg-ink p-4">
+                    <button className="text-sm font-medium text-accent hover:text-accent-hover transition-colors">
+                      View Full History →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Ledger Table */}
+                <div className="space-y-1">
+                  <div className="grid grid-cols-5 gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-text-muted">
+                    <span>Date</span>
+                    <span>Pick</span>
+                    <span>Units</span>
+                    <span>Anchor</span>
+                    <span>Result</span>
+                  </div>
+                  {ledgerRows.map((row, idx) => (
+                    <div
+                      key={`${row.date}-${row.pick}`}
+                      className={`grid grid-cols-5 gap-4 rounded-lg px-4 py-3 text-sm ${
+                        idx % 2 === 0 ? 'bg-ink' : 'bg-surface'
+                      }`}
+                    >
+                      <span className="font-mono text-text-muted">{row.date}</span>
+                      <span className="font-medium text-text-primary">{row.pick}</span>
+                      <span className="font-mono text-text-secondary">{row.units}</span>
+                      <span className="text-text-muted">{row.anchor}</span>
+                      <span className={`font-semibold ${
+                        row.status === 'W' ? 'text-success' : 
+                        row.status === 'L' ? 'text-danger' : 'text-text-muted'
+                      }`}>
+                        {row.status === 'W' ? '✓ Win' : row.status === 'L' ? '✗ Loss' : row.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {!isLoggedIn && (
+                  <div className="rounded-lg border border-border bg-ink px-4 py-3 text-center text-xs text-text-muted">
+                    Log in to view full ledger history and verified analyst details.
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
-          <div className="space-y-6 px-6 py-6">
-            <div className="grid gap-5 md:grid-cols-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-slate-100">
-                  +18.4 Units
-                </h3>
-                <p className="text-sm text-muted">Past 90 days</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-muted">Win/Loss</h4>
-                <p className="text-base">61 - 47</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-muted">Last 7 Picks</h4>
-                <p className="text-base">4W / 3L</p>
-              </div>
-              <div className="flex items-center">
-                <button className="rounded-xl border border-border px-4 py-2 text-sm">
-                  View Full History
-                </button>
+
+          {/* Sidebar */}
+          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+            {/* Quick Stats */}
+            <div className="rounded-2xl border border-border bg-surface p-5">
+              <h3 className="font-display text-sm font-bold text-text-primary mb-4">Quick Stats</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-muted">Today's Record</span>
+                  <span className="font-mono text-sm font-semibold text-success">2-1</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-muted">Week Profit</span>
+                  <span className="font-mono text-sm font-semibold text-accent">+4.2u</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-muted">Active Picks</span>
+                  <span className="font-mono text-sm font-semibold text-text-primary">3</span>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2 text-sm">
-              <div className="grid grid-cols-5 gap-4 rounded-xl bg-ink px-4 py-2 text-xs uppercase tracking-widest text-muted">
-                <span>Date</span>
-                <span>Pick</span>
-                <span>Units</span>
-                <span>Anchor</span>
-                <span>Status</span>
+            {/* Trending */}
+            <div className="rounded-2xl border border-border bg-surface p-5">
+              <h3 className="font-display text-sm font-bold text-text-primary mb-4">🔥 Trending</h3>
+              <div className="space-y-3">
+                {["Chiefs -3.5", "Lakers ML", "Ohtani Over 1.5 K"].map((pick, i) => (
+                  <div key={pick} className="flex items-center justify-between rounded-lg bg-ink px-3 py-2">
+                    <span className="text-sm text-text-secondary">{pick}</span>
+                    <span className="text-xs text-text-muted">#{i + 1}</span>
+                  </div>
+                ))}
               </div>
-              {ledgerRows.map((row) => (
-                <div
-                  key={`${row.date}-${row.pick}`}
-                  className="grid grid-cols-5 gap-4 rounded-xl border border-border bg-card px-4 py-3"
-                >
-                  <span>{row.date}</span>
-                  <span>{row.pick}</span>
-                  <span>{row.units}</span>
-                  <span>{row.anchor}</span>
-                  <span className={statusClasses[row.status]}>
-                    {row.status}
-                  </span>
-                </div>
-              ))}
             </div>
-            {!isLoggedIn && (
-              <div className="rounded-xl border border-border bg-ink px-4 py-3 text-xs text-muted">
-                Log in to view full ledger history and verified analyst details.
+
+            {/* Recent Activity */}
+            <div className="rounded-2xl border border-border bg-surface p-5">
+              <h3 className="font-display text-sm font-bold text-text-primary mb-4">Recent Activity</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex gap-3">
+                  <span className="text-success">✓</span>
+                  <div>
+                    <p className="text-text-secondary">Bills -6.5 hit</p>
+                    <p className="text-xs text-text-muted">2 hours ago</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-accent">+</span>
+                  <div>
+                    <p className="text-text-secondary">New pick posted</p>
+                    <p className="text-xs text-text-muted">4 hours ago</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-danger">✗</span>
+                  <div>
+                    <p className="text-text-secondary">Celtics ML missed</p>
+                    <p className="text-xs text-text-muted">Yesterday</p>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-        </section>
+            </div>
+          </aside>
+        </div>
       </main>
 
-      <footer className="px-6 pb-12 text-center text-xs text-muted md:px-12">
-        Beta build prototype. Data shown is sample-only. Ledger immutability and
-        verified picks require backend integration.
+      {/* Footer */}
+      <footer className="mx-auto max-w-8xl border-t border-border/50 px-6 py-8 md:px-8">
+        <p className="text-center text-xs text-text-muted">
+          Intelligence Ledger Beta · Data shown is sample-only · © 2025
+        </p>
       </footer>
 
       <Modal open={pickOpen} onClose={() => { resetPickModal(); setPickOpen(false); }}>

@@ -1,8 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Custom Properties for easy theming */
+:root {
+  --color-ink: #0A0A0B;
+  --color-surface: #141416;
+  --color-accent: #F5A623;
+  --color-text: #FAFAFA;
+  --color-text-muted: #636366;
+}
+
+/* Base styles */
 body {
-  @apply bg-ink text-slate-200;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  @apply bg-ink text-text-primary antialiased;
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  font-feature-settings: "ss01" on, "ss02" on;
+}
+
+/* Typography utilities */
+.font-display {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.font-stats {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-ink;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-text-muted;
+}
+
+/* Selection color */
+::selection {
+  @apply bg-accent/30 text-text-primary;
+}
+
+/* Utility classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .gold-glow {
+    box-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
+  }
+  
+  .card-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .card-hover:hover {
+    @apply border-accent/30 shadow-glow-sm;
+  }
+}
+
+/* Animation classes */
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
 }
