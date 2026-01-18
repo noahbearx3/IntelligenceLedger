@@ -129,8 +129,13 @@ const Modal = ({ open, onClose, children, tone = "default" }) => {
   );
 };
 
+const teams = ["Buffalo Bills", "Miami Dolphins", "Kansas City Chiefs", "Philadelphia Eagles"];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState("team");
+  const [selectedTeam, setSelectedTeam] = useState(teams[0]);
+  const [newsSearchQuery, setNewsSearchQuery] = useState("");
+  const [newsSearchActive, setNewsSearchActive] = useState(false);
   const [tidbits, setTidbits] = useState(initialTidbits);
   const [tidbitInput, setTidbitInput] = useState("");
   const [vault, setVault] = useState(25);
@@ -182,6 +187,14 @@ export default function App() {
     } else {
       alert("Kill-Switch set. You are within your stop-loss range.");
     }
+  };
+
+  const handleNewsSearch = () => {
+    const query = newsSearchQuery.trim();
+    if (!query) return;
+    setNewsSearchActive(true);
+    // Search functionality will be implemented in US-003
+    console.log(`Searching news for: ${query} (team: ${selectedTeam})`);
   };
 
   return (
@@ -260,11 +273,20 @@ export default function App() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <label className="flex flex-col gap-2 text-sm text-muted">
                 Entity
-                <select className="w-60 rounded-xl border border-border bg-card px-4 py-2 text-sm text-slate-200">
-                  <option>Buffalo Bills</option>
-                  <option>Miami Dolphins</option>
-                  <option>Kansas City Chiefs</option>
-                  <option>Philadelphia Eagles</option>
+                <select
+                  className="w-60 rounded-xl border border-border bg-card px-4 py-2 text-sm text-slate-200"
+                  value={selectedTeam}
+                  onChange={(e) => {
+                    setSelectedTeam(e.target.value);
+                    setNewsSearchActive(false);
+                    setNewsSearchQuery("");
+                  }}
+                >
+                  {teams.map((team) => (
+                    <option key={team} value={team}>
+                      {team}
+                    </option>
+                  ))}
                 </select>
               </label>
               <div className="flex flex-wrap gap-2 text-xs">
@@ -277,6 +299,29 @@ export default function App() {
                   </span>
                 ))}
               </div>
+            </div>
+
+            {/* News Search Input */}
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={newsSearchQuery}
+                onChange={(e) => setNewsSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleNewsSearch();
+                  }
+                }}
+                placeholder={`Search news for ${selectedTeam}...`}
+                className="flex-1 rounded-xl border border-border bg-ink px-4 py-2 text-sm"
+              />
+              <button
+                onClick={handleNewsSearch}
+                className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink"
+              >
+                Search
+              </button>
             </div>
 
             <div className="grid gap-5 lg:grid-cols-3">
