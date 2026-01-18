@@ -1,5 +1,106 @@
 // Mock analyst data for social features
 
+// Comments on picks
+export const COMMENTS = [
+  {
+    id: "c1",
+    pickId: "p1",
+    userId: "user-bob",
+    userName: "Bob",
+    userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=B&backgroundColor=6366f1",
+    content: "Great call on the Bills. Their defense has been dominant at home.",
+    upvotes: 12,
+    upvotedBy: ["user-1", "user-2"],
+    createdAt: "2025-01-17T14:30:00Z",
+    replies: [
+      {
+        id: "c1-r1",
+        userId: "analyst-001",
+        userName: "SharpSide",
+        userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=SS&backgroundColor=F5A623",
+        content: "Thanks! The weather factor was key too. Cold games favor Buffalo.",
+        upvotes: 8,
+        upvotedBy: [],
+        createdAt: "2025-01-17T15:00:00Z",
+      }
+    ]
+  },
+  {
+    id: "c2",
+    pickId: "p1",
+    userId: "user-jane",
+    userName: "JaneBets",
+    userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=JB&backgroundColor=ec4899",
+    content: "Tailed this one. Let's ride! 🔥",
+    upvotes: 5,
+    upvotedBy: [],
+    createdAt: "2025-01-17T13:00:00Z",
+    replies: []
+  },
+  {
+    id: "c3",
+    pickId: "p2",
+    userId: "user-mike",
+    userName: "MikeTheShark",
+    userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=MS&backgroundColor=22c55e",
+    content: "Celtics are a lock at home. Good spot.",
+    upvotes: 3,
+    upvotedBy: [],
+    createdAt: "2025-01-16T18:00:00Z",
+    replies: []
+  },
+  {
+    id: "c4",
+    pickId: "p8",
+    userId: "user-bob",
+    userName: "Bob",
+    userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=B&backgroundColor=6366f1",
+    content: "Ice Picks never misses on NHL. Following this one.",
+    upvotes: 7,
+    upvotedBy: [],
+    createdAt: "2025-01-17T12:00:00Z",
+    replies: [
+      {
+        id: "c4-r1",
+        userId: "user-jane",
+        userName: "JaneBets",
+        userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=JB&backgroundColor=ec4899",
+        content: "Same! His puck line picks are money 💰",
+        upvotes: 2,
+        upvotedBy: [],
+        createdAt: "2025-01-17T12:30:00Z",
+      }
+    ]
+  },
+];
+
+// Reactions on picks
+export const REACTIONS = {
+  "p1": { fire: 24, money: 12, bullseye: 8, skull: 2, thinking: 3 },
+  "p2": { fire: 18, money: 15, bullseye: 6, skull: 1, thinking: 2 },
+  "p3": { fire: 31, money: 22, bullseye: 14, skull: 0, thinking: 1 },
+  "p8": { fire: 15, money: 8, bullseye: 11, skull: 0, thinking: 0 },
+  "p10": { fire: 9, money: 6, bullseye: 3, skull: 5, thinking: 4 },
+};
+
+export const REACTION_TYPES = [
+  { key: "fire", emoji: "🔥", label: "Fire" },
+  { key: "money", emoji: "💰", label: "Money" },
+  { key: "bullseye", emoji: "🎯", label: "Bullseye" },
+  { key: "skull", emoji: "💀", label: "Fade" },
+  { key: "thinking", emoji: "🤔", label: "Thinking" },
+];
+
+// Get comments for a pick
+export function getCommentsForPick(pickId) {
+  return COMMENTS.filter(c => c.pickId === pickId).sort((a, b) => b.upvotes - a.upvotes);
+}
+
+// Get reactions for a pick
+export function getReactionsForPick(pickId) {
+  return REACTIONS[pickId] || { fire: 0, money: 0, bullseye: 0, skull: 0, thinking: 0 };
+}
+
 export const ANALYSTS = [
   {
     id: "analyst-001",

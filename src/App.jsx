@@ -3,7 +3,7 @@ import { getIntelligence, canUseRealApi } from "./services/newsApi";
 import { getOdds, SPORTS, BOOKMAKERS, formatOdds, findBestOdds } from "./services/oddsApi";
 import { TEAMS_BY_LEAGUE, FEATURED_TEAMS, ALL_TEAMS, findTeam, getLeagueForTeam, getLogoUrl } from "./data/teams";
 import { PLAYERS_BY_LEAGUE, FEATURED_PLAYERS, ALL_PLAYERS, findPlayer, getLeagueForPlayer, getHeadshotUrl, FALLBACK_HEADSHOT, POSITION_COLORS } from "./data/players";
-import { ANALYSTS, getAnalystById, getTopAnalysts, formatStreak, formatWinRate, formatROI, formatFollowers, SPECIALTY_COLORS } from "./data/analysts";
+import { ANALYSTS, getAnalystById, getTopAnalysts, formatStreak, formatWinRate, formatROI, formatFollowers, SPECIALTY_COLORS, COMMENTS, REACTIONS, REACTION_TYPES, getCommentsForPick, getReactionsForPick } from "./data/analysts";
 
 const rssItems = [
   {
@@ -252,6 +252,27 @@ export default function App() {
   const [selectedAnalyst, setSelectedAnalyst] = useState(null);
   const [analystModalOpen, setAnalystModalOpen] = useState(false);
   const [feedTab, setFeedTab] = useState("discover"); // "discover" | "following"
+  
+  // Pick detail & comments state
+  const [selectedPick, setSelectedPick] = useState(null);
+  const [pickModalOpen, setPickModalOpen] = useState(false);
+  const [comments, setComments] = useState(COMMENTS);
+  const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [userReactions, setUserReactions] = useState(() => {
+    const saved = localStorage.getItem("userReactions");
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [pickReactions, setPickReactions] = useState(REACTIONS);
+  
+  // Notifications state
+  const [notifications, setNotifications] = useState([
+    { id: "n1", type: "follow", message: "SharpSide started following you", isRead: false, createdAt: "2025-01-17T10:00:00Z" },
+    { id: "n2", type: "comment", message: "JaneBets commented on your pick", isRead: false, createdAt: "2025-01-17T09:30:00Z" },
+    { id: "n3", type: "upvote", message: "Your comment got 10 upvotes!", isRead: true, createdAt: "2025-01-16T18:00:00Z" },
+  ]);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   // Odds selection state
   const [pickStep, setPickStep] = useState(1); // 1: sport, 2: game, 3: market, 4: confirm
@@ -304,6 +325,139 @@ export default function App() {
       .flatMap(a => a.recentPicks.map(p => ({ ...p, analyst: a })))
       .sort((a, b) => new Date(b.date) - new Date(a.date));
   };
+
+  // Open pick detail modal
+  const openPickDetail = (pick, analyst) => {
+    setSelectedPick({ ...pick, analyst });
+    setPickModalOpen(true);
+  };
+
+  // Add comment
+  const handleAddComment = () => {
+    if (!newComment.trim() || !selectedPick) return;
+    if (!isLoggedIn) {
+      setLoginOpen(true);
+      return;
+    }
+    const comment = {
+      id: `c-${Date.now()}`,
+      pickId: selectedPick.id,
+      userId: "user-bob",
+      userName: loginName,
+      userAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${loginName[0]}&backgroundColor=6366f1`,
+      content: newComment,
+      upvotes: 0,
+      upvotedBy: [],
+      createdAt: new Date().toISOString(),
+      replies: []
+    };
+    setComments(prev => [comment, ...prev]);
+    setNewComment("");
+  };
+
+  // Add reply
+  const handleAddReply = (commentId) => {
+    if (!replyText.trim()) return;
+    if (!isLoggedIn) {
+      setLoginOpen(true);
+      return;
+    }
+    const reply = {
+      id: `r-${Date.now()}`,
+      userId: "user-bob",
+      userName: loginName,
+      userAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${loginName[0]}&backgroundColor=6366f1`,
+      content: replyText,
+      upvotes: 0,
+      upvotedBy: [],
+      createdAt: new Date().toISOString(),
+    };
+    setComments(prev => prev.map(c => 
+      c.id === commentId 
+        ? { ...c, replies: [...c.replies, reply] }
+        : c
+    ));
+    setReplyText("");
+    setReplyingTo(null);
+  };
+
+  // Upvote comment
+  const handleUpvote = (commentId, isReply = false, parentId = null) => {
+    if (!isLoggedIn) {
+      setLoginOpen(true);
+      return;
+    }
+    if (isReply && parentId) {
+      setComments(prev => prev.map(c => {
+        if (c.id === parentId) {
+          return {
+            ...c,
+            replies: c.replies.map(r => 
+              r.id === commentId
+                ? { ...r, upvotes: r.upvotedBy?.includes("user-bob") ? r.upvotes - 1 : r.upvotes + 1, upvotedBy: r.upvotedBy?.includes("user-bob") ? r.upvotedBy.filter(u => u !== "user-bob") : [...(r.upvotedBy || []), "user-bob"] }
+                : r
+            )
+          };
+        }
+        return c;
+      }));
+    } else {
+      setComments(prev => prev.map(c => 
+        c.id === commentId
+          ? { ...c, upvotes: c.upvotedBy?.includes("user-bob") ? c.upvotes - 1 : c.upvotes + 1, upvotedBy: c.upvotedBy?.includes("user-bob") ? c.upvotedBy.filter(u => u !== "user-bob") : [...(c.upvotedBy || []), "user-bob"] }
+          : c
+      ));
+    }
+  };
+
+  // Toggle reaction
+  const handleReaction = (pickId, reactionType) => {
+    if (!isLoggedIn) {
+      setLoginOpen(true);
+      return;
+    }
+    const currentReaction = userReactions[pickId];
+    
+    // Update user reactions
+    setUserReactions(prev => {
+      const updated = { ...prev };
+      if (currentReaction === reactionType) {
+        delete updated[pickId];
+      } else {
+        updated[pickId] = reactionType;
+      }
+      localStorage.setItem("userReactions", JSON.stringify(updated));
+      return updated;
+    });
+
+    // Update pick reactions count
+    setPickReactions(prev => {
+      const updated = { ...prev };
+      if (!updated[pickId]) {
+        updated[pickId] = { fire: 0, money: 0, bullseye: 0, skull: 0, thinking: 0 };
+      }
+      if (currentReaction) {
+        updated[pickId][currentReaction] = Math.max(0, updated[pickId][currentReaction] - 1);
+      }
+      if (currentReaction !== reactionType) {
+        updated[pickId][reactionType] = (updated[pickId][reactionType] || 0) + 1;
+      }
+      return updated;
+    });
+  };
+
+  // Get comments for current pick
+  const getPickComments = () => {
+    if (!selectedPick) return [];
+    return comments.filter(c => c.pickId === selectedPick.id).sort((a, b) => b.upvotes - a.upvotes);
+  };
+
+  // Mark notifications as read
+  const markAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   // Auto-search when team or player changes
   useEffect(() => {
@@ -515,6 +669,58 @@ export default function App() {
           <nav className="flex items-center gap-3">
             {isLoggedIn ? (
               <>
+                {/* Notifications */}
+                <div className="relative">
+                  <button
+                    onClick={() => setNotifOpen(!notifOpen)}
+                    className="relative rounded-lg p-2 text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-ink">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  
+                  {/* Notifications Dropdown */}
+                  {notifOpen && (
+                    <div className="absolute right-0 mt-2 w-80 rounded-xl border border-border bg-surface shadow-xl animate-fade-in-down z-50">
+                      <div className="flex items-center justify-between border-b border-border p-3">
+                        <span className="font-semibold text-text-primary">Notifications</span>
+                        <button onClick={markAllRead} className="text-xs text-accent hover:underline">Mark all read</button>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <p className="p-4 text-center text-sm text-text-muted">No notifications</p>
+                        ) : (
+                          notifications.map((notif) => (
+                            <div
+                              key={notif.id}
+                              className={`flex items-start gap-3 p-3 border-b border-border/50 last:border-0 ${!notif.isRead ? 'bg-accent/5' : ''}`}
+                            >
+                              <span className="text-lg">
+                                {notif.type === 'follow' && '👤'}
+                                {notif.type === 'comment' && '💬'}
+                                {notif.type === 'upvote' && '⬆️'}
+                              </span>
+                              <div className="flex-1">
+                                <p className="text-sm text-text-secondary">{notif.message}</p>
+                                <p className="text-xs text-text-muted mt-1">
+                                  {new Date(notif.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              {!notif.isRead && <span className="h-2 w-2 rounded-full bg-accent" />}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary">
                   <span className="h-1.5 w-1.5 rounded-full bg-success" />
                   {loginName}
@@ -1272,7 +1478,11 @@ export default function App() {
                 </div>
                 <div className="space-y-3">
                   {getFollowingFeed().slice(0, 3).map((pick) => (
-                    <div key={pick.id} className="rounded-lg bg-ink p-3">
+                    <button
+                      key={pick.id}
+                      onClick={() => openPickDetail(pick, pick.analyst)}
+                      className="w-full rounded-lg bg-ink p-3 text-left hover:bg-surface-elevated transition-colors"
+                    >
                       <div className="flex items-center gap-2 mb-2">
                         <img
                           src={pick.analyst.avatar}
@@ -1287,10 +1497,21 @@ export default function App() {
                           {pick.result === 'W' ? '✓ Win' : '✗ Loss'}
                         </span>
                       </div>
-                      <div className="text-xs text-text-muted mt-1">
-                        {pick.units}u @ {pick.odds > 0 ? `+${pick.odds}` : pick.odds}
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-text-muted">
+                          {pick.units}u @ {pick.odds > 0 ? `+${pick.odds}` : pick.odds}
+                        </span>
+                        {/* Reaction preview */}
+                        <div className="flex items-center gap-1">
+                          {pickReactions[pick.id]?.fire > 0 && (
+                            <span className="text-xs">🔥 {pickReactions[pick.id].fire}</span>
+                          )}
+                          {comments.filter(c => c.pickId === pick.id).length > 0 && (
+                            <span className="text-xs text-text-muted">💬 {comments.filter(c => c.pickId === pick.id).length}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                   {getFollowingFeed().length === 0 && (
                     <p className="text-xs text-text-muted text-center py-2">No recent picks from followed analysts</p>
@@ -1538,6 +1759,185 @@ export default function App() {
         )}
       </Modal>
 
+      {/* Pick Detail Modal */}
+      <Modal open={pickModalOpen} onClose={() => { setPickModalOpen(false); setReplyingTo(null); }}>
+        {selectedPick && (
+          <div className="space-y-5">
+            {/* Pick Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedPick.analyst?.avatar}
+                  alt=""
+                  className="w-12 h-12 rounded-full"
+                />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-text-primary">{selectedPick.analyst?.displayName}</span>
+                    {selectedPick.analyst?.isVerified && <span className="text-accent text-xs">✓</span>}
+                  </div>
+                  <p className="text-xs text-text-muted">@{selectedPick.analyst?.username} • {selectedPick.date}</p>
+                </div>
+              </div>
+              <button onClick={() => setPickModalOpen(false)} className="text-xl text-text-muted hover:text-text-primary">×</button>
+            </div>
+
+            {/* Pick Details */}
+            <div className="rounded-xl bg-ink p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xl font-bold text-text-primary">{selectedPick.pick}</span>
+                <span className={`rounded-lg px-3 py-1 text-sm font-semibold ${selectedPick.result === 'W' ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}>
+                  {selectedPick.result === 'W' ? '✓ Win' : '✗ Loss'}
+                </span>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-sm text-text-muted">
+                <span>{selectedPick.units} units</span>
+                <span>@ {selectedPick.odds > 0 ? `+${selectedPick.odds}` : selectedPick.odds}</span>
+              </div>
+            </div>
+
+            {/* Reactions */}
+            <div className="flex flex-wrap gap-2">
+              {REACTION_TYPES.map((reaction) => {
+                const count = pickReactions[selectedPick.id]?.[reaction.key] || 0;
+                const isActive = userReactions[selectedPick.id] === reaction.key;
+                return (
+                  <button
+                    key={reaction.key}
+                    onClick={() => handleReaction(selectedPick.id, reaction.key)}
+                    className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all ${
+                      isActive 
+                        ? 'bg-accent/20 ring-1 ring-accent' 
+                        : 'bg-surface-elevated hover:bg-ink'
+                    }`}
+                  >
+                    <span>{reaction.emoji}</span>
+                    {count > 0 && <span className="text-xs font-medium text-text-muted">{count}</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Comments Section */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">
+                Discussion ({getPickComments().length})
+              </h4>
+
+              {/* Comment Input */}
+              {isFollowing(selectedPick.analyst?.id) ? (
+                <div className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                    placeholder="Add a comment..."
+                    className="input flex-1"
+                  />
+                  <button onClick={handleAddComment} className="btn btn-primary">Post</button>
+                </div>
+              ) : (
+                <div className="rounded-lg bg-ink border border-border p-3 mb-4 text-center">
+                  <p className="text-sm text-text-muted">Follow @{selectedPick.analyst?.username} to join the discussion</p>
+                  <button
+                    onClick={() => handleFollow(selectedPick.analyst?.id)}
+                    className="btn btn-primary mt-2"
+                  >
+                    Follow
+                  </button>
+                </div>
+              )}
+
+              {/* Comments List */}
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {getPickComments().length === 0 ? (
+                  <p className="text-center text-sm text-text-muted py-4">No comments yet. Be the first!</p>
+                ) : (
+                  getPickComments().map((comment) => (
+                    <div key={comment.id} className="rounded-lg bg-ink p-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <img src={comment.userAvatar} alt="" className="w-7 h-7 rounded-full" />
+                          <div>
+                            <span className="text-sm font-medium text-text-primary">{comment.userName}</span>
+                            <span className="text-xs text-text-muted ml-2">
+                              {new Date(comment.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleUpvote(comment.id)}
+                          className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors ${
+                            comment.upvotedBy?.includes("user-bob") 
+                              ? 'bg-accent/20 text-accent' 
+                              : 'bg-surface-elevated text-text-muted hover:text-accent'
+                          }`}
+                        >
+                          ▲ {comment.upvotes}
+                        </button>
+                      </div>
+                      <p className="text-sm text-text-secondary mt-2">{comment.content}</p>
+                      
+                      {/* Reply Button */}
+                      <button
+                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        className="text-xs text-text-muted hover:text-accent mt-2"
+                      >
+                        Reply
+                      </button>
+
+                      {/* Replies */}
+                      {comment.replies?.length > 0 && (
+                        <div className="mt-3 pl-4 border-l-2 border-border space-y-2">
+                          {comment.replies.map((reply) => (
+                            <div key={reply.id} className="rounded-lg bg-surface p-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <img src={reply.userAvatar} alt="" className="w-5 h-5 rounded-full" />
+                                  <span className="text-xs font-medium text-text-primary">{reply.userName}</span>
+                                </div>
+                                <button
+                                  onClick={() => handleUpvote(reply.id, true, comment.id)}
+                                  className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                                    reply.upvotedBy?.includes("user-bob") 
+                                      ? 'bg-accent/20 text-accent' 
+                                      : 'bg-ink text-text-muted hover:text-accent'
+                                  }`}
+                                >
+                                  ▲ {reply.upvotes}
+                                </button>
+                              </div>
+                              <p className="text-xs text-text-secondary mt-1">{reply.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reply Input */}
+                      {replyingTo === comment.id && (
+                        <div className="flex gap-2 mt-3 pl-4">
+                          <input
+                            type="text"
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddReply(comment.id)}
+                            placeholder="Write a reply..."
+                            className="input flex-1 text-sm py-1.5"
+                            autoFocus
+                          />
+                          <button onClick={() => handleAddReply(comment.id)} className="btn btn-primary text-sm py-1.5">Reply</button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* Analyst Profile Modal */}
       <Modal open={analystModalOpen} onClose={() => setAnalystModalOpen(false)}>
         {selectedAnalyst && (
@@ -1619,17 +2019,26 @@ export default function App() {
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Recent Picks</h4>
                 <div className="space-y-2">
                   {selectedAnalyst.recentPicks.slice(0, 4).map((pick) => (
-                    <div key={pick.id} className="flex items-center justify-between rounded-lg bg-ink p-3">
+                    <button
+                      key={pick.id}
+                      onClick={() => { setAnalystModalOpen(false); openPickDetail(pick, selectedAnalyst); }}
+                      className="w-full flex items-center justify-between rounded-lg bg-ink p-3 hover:bg-surface-elevated transition-colors text-left"
+                    >
                       <div>
                         <span className="text-sm font-medium text-text-primary">{pick.pick}</span>
-                        <div className="text-xs text-text-muted">
-                          {pick.units}u @ {pick.odds > 0 ? `+${pick.odds}` : pick.odds} • {pick.date}
+                        <div className="flex items-center gap-3 text-xs text-text-muted">
+                          <span>{pick.units}u @ {pick.odds > 0 ? `+${pick.odds}` : pick.odds}</span>
+                          <span>•</span>
+                          <span>{pick.date}</span>
+                          {comments.filter(c => c.pickId === pick.id).length > 0 && (
+                            <span>💬 {comments.filter(c => c.pickId === pick.id).length}</span>
+                          )}
                         </div>
                       </div>
                       <span className={`rounded-md px-2 py-1 text-xs font-semibold ${pick.result === 'W' ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}>
                         {pick.result === 'W' ? '✓ Win' : '✗ Loss'}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
