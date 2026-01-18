@@ -99,7 +99,8 @@ export const LEAGUE_IDS = {
  */
 async function apiRequest(endpoint) {
   if (!API_KEY) {
-    console.warn("API-Football key not configured, using mock data");
+    console.warn("⚠️ VITE_FOOTBALL_API_KEY not configured, using mock data");
+    console.warn("Key value:", API_KEY);
     return null;
   }
 
@@ -111,28 +112,40 @@ async function apiRequest(endpoint) {
   }
 
   try {
-    console.log(`🌐 API call #${++apiCallsThisSession}: ${endpoint}`);
+    const url = `${BASE_URL}${endpoint}`;
+    console.log(`🌐 API call #${++apiCallsThisSession}: ${url}`);
+    console.log(`🔑 Using key: ${API_KEY.substring(0, 8)}...`);
     
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
+    const response = await fetch(url, {
       method: "GET",
       headers: {
         "x-apisports-key": API_KEY,
       },
     });
 
+    console.log(`📡 Response status: ${response.status}`);
+
     if (!response.ok) {
-      console.error("API-Football error:", response.status);
+      const errorText = await response.text();
+      console.error("❌ API-Football error:", response.status, errorText);
       return null;
     }
 
     const data = await response.json();
+    console.log(`✅ API response:`, data);
+    
+    // Check for API errors in response
+    if (data.errors && Object.keys(data.errors).length > 0) {
+      console.error("❌ API returned errors:", data.errors);
+      return null;
+    }
     
     // Cache the response
     setCache(endpoint, data.response);
     
     return data.response;
   } catch (error) {
-    console.error("API-Football fetch error:", error);
+    console.error("❌ API-Football fetch error:", error);
     return null;
   }
 }
