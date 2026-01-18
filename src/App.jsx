@@ -105,6 +105,140 @@ const statusClasses = {
   Pending: "text-warning",
 };
 
+// US-002: Mock news data for beta
+const mockNewsData = [
+  {
+    id: 1,
+    headline: "Josh Allen leads Bills to dominant victory in frigid conditions",
+    snippet: "The Bills QB threw for 3 TDs in sub-20°F weather, continuing his impressive cold-weather streak.",
+    source: "ESPN",
+    url: "https://espn.com/nfl/bills-victory",
+    timestamp: "2026-01-18T14:30:00Z",
+    relatedTeams: ["Buffalo Bills"],
+  },
+  {
+    id: 2,
+    headline: "Bills defense ranks #1 in red zone efficiency this season",
+    snippet: "Buffalo's defense has allowed just 42% red zone conversions, the best mark in the NFL.",
+    source: "RSS",
+    url: "https://buffalobills.com/news/defense-stats",
+    timestamp: "2026-01-18T12:00:00Z",
+    relatedTeams: ["Buffalo Bills"],
+  },
+  {
+    id: 3,
+    headline: "Tua questionable for Sunday's matchup vs Jets",
+    snippet: "Dolphins QB Tua Tagovailoa limited in practice with ankle issue. Game-time decision expected.",
+    source: "Twitter",
+    url: "https://twitter.com/dolphins/status/123",
+    timestamp: "2026-01-18T10:15:00Z",
+    relatedTeams: ["Miami Dolphins"],
+  },
+  {
+    id: 4,
+    headline: "Dolphins WR Tyreek Hill back at full practice",
+    snippet: "Hill returned to full participation after missing last week with a hip flexor strain.",
+    source: "RSS",
+    url: "https://miamidolphins.com/news/hill-practice",
+    timestamp: "2026-01-17T16:45:00Z",
+    relatedTeams: ["Miami Dolphins"],
+  },
+  {
+    id: 5,
+    headline: "Chiefs clinch #1 seed with win over Raiders",
+    snippet: "Kansas City secures home-field advantage throughout the playoffs with their 13th win.",
+    source: "ESPN",
+    url: "https://espn.com/nfl/chiefs-clinch",
+    timestamp: "2026-01-17T23:30:00Z",
+    relatedTeams: ["Kansas City Chiefs"],
+  },
+  {
+    id: 6,
+    headline: "Mahomes admits to playing through toe injury",
+    snippet: "Chiefs QB Patrick Mahomes reveals he's been managing turf toe for the past 3 weeks.",
+    source: "Reddit",
+    url: "https://reddit.com/r/nfl/mahomes-injury",
+    timestamp: "2026-01-17T14:00:00Z",
+    relatedTeams: ["Kansas City Chiefs"],
+  },
+  {
+    id: 7,
+    headline: "Eagles OL shuffle: Kelce moving to guard?",
+    snippet: "Philadelphia considering position switch for Jason Kelce amid offensive line injuries.",
+    source: "Twitter",
+    url: "https://twitter.com/eagles/status/456",
+    timestamp: "2026-01-18T09:00:00Z",
+    relatedTeams: ["Philadelphia Eagles"],
+  },
+  {
+    id: 8,
+    headline: "Hurts throws 4 TDs in Eagles blowout win",
+    snippet: "Jalen Hurts looked sharp with 4 passing touchdowns as Philadelphia dominated the Giants.",
+    source: "ESPN",
+    url: "https://espn.com/nfl/eagles-win",
+    timestamp: "2026-01-16T22:00:00Z",
+    relatedTeams: ["Philadelphia Eagles"],
+  },
+  {
+    id: 9,
+    headline: "Bills vs Dolphins: Key matchup preview",
+    snippet: "AFC East rivalry heats up as Buffalo and Miami prepare for a crucial divisional showdown.",
+    source: "RSS",
+    url: "https://nfl.com/news/bills-dolphins-preview",
+    timestamp: "2026-01-18T08:00:00Z",
+    relatedTeams: ["Buffalo Bills", "Miami Dolphins"],
+  },
+  {
+    id: 10,
+    headline: "Chiefs RB room dealing with injuries ahead of playoffs",
+    snippet: "Kansas City's backfield depth tested with Pacheco and Edwards both questionable.",
+    source: "Reddit",
+    url: "https://reddit.com/r/kansascitychiefs/rb-injuries",
+    timestamp: "2026-01-17T11:30:00Z",
+    relatedTeams: ["Kansas City Chiefs"],
+  },
+  {
+    id: 11,
+    headline: "Snow expected for Bills home playoff game",
+    snippet: "Lake effect snow forecasted for Highmark Stadium, potentially impacting passing game.",
+    source: "Twitter",
+    url: "https://twitter.com/weatherchannel/buffalo",
+    timestamp: "2026-01-18T07:00:00Z",
+    relatedTeams: ["Buffalo Bills"],
+  },
+  {
+    id: 12,
+    headline: "Eagles secondary gets boost with Slay return",
+    snippet: "CB Darius Slay cleared from concussion protocol, will play Sunday against Cowboys.",
+    source: "ESPN",
+    url: "https://espn.com/nfl/slay-return",
+    timestamp: "2026-01-17T18:00:00Z",
+    relatedTeams: ["Philadelphia Eagles"],
+  },
+];
+
+// Source tag color mapping
+const sourceColors = {
+  RSS: "bg-blue-500/20 text-blue-400",
+  Twitter: "bg-sky-500/20 text-sky-400",
+  Reddit: "bg-orange-500/20 text-orange-400",
+  ESPN: "bg-emerald-500/20 text-emerald-400",
+};
+
+// Helper to format relative time
+const formatRelativeTime = (timestamp) => {
+  const now = new Date();
+  const date = new Date(timestamp);
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
+};
+
 const Modal = ({ open, onClose, children, tone = "default" }) => {
   if (!open) {
     return null;
@@ -136,6 +270,9 @@ export default function App() {
   const [selectedTeam, setSelectedTeam] = useState(teams[0]);
   const [newsSearchQuery, setNewsSearchQuery] = useState("");
   const [newsSearchActive, setNewsSearchActive] = useState(false);
+  const [newsResults, setNewsResults] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsError, setNewsError] = useState(null);
   const [tidbits, setTidbits] = useState(initialTidbits);
   const [tidbitInput, setTidbitInput] = useState("");
   const [vault, setVault] = useState(25);
@@ -192,9 +329,33 @@ export default function App() {
   const handleNewsSearch = () => {
     const query = newsSearchQuery.trim();
     if (!query) return;
+
     setNewsSearchActive(true);
-    // Search functionality will be implemented in US-003
-    console.log(`Searching news for: ${query} (team: ${selectedTeam})`);
+    setNewsLoading(true);
+    setNewsError(null);
+
+    // Simulate 300ms API delay
+    setTimeout(() => {
+      try {
+        const searchLower = query.toLowerCase();
+        const filtered = mockNewsData
+          .filter((article) => {
+            const inHeadline = article.headline.toLowerCase().includes(searchLower);
+            const inSnippet = article.snippet.toLowerCase().includes(searchLower);
+            const inTeams = article.relatedTeams.some((team) =>
+              team.toLowerCase().includes(searchLower)
+            );
+            return inHeadline || inSnippet || inTeams;
+          })
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Newest first
+
+        setNewsResults(filtered);
+        setNewsLoading(false);
+      } catch (err) {
+        setNewsError("Unable to load news. Please try again.");
+        setNewsLoading(false);
+      }
+    }, 300);
   };
 
   return (
@@ -280,6 +441,8 @@ export default function App() {
                     setSelectedTeam(e.target.value);
                     setNewsSearchActive(false);
                     setNewsSearchQuery("");
+                    setNewsResults([]);
+                    setNewsError(null);
                   }}
                 >
                   {teams.map((team) => (
@@ -323,6 +486,76 @@ export default function App() {
                 Search
               </button>
             </div>
+
+            {/* News Results Section */}
+            {newsSearchActive && (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <h3 className="text-base font-semibold mb-4">News Results</h3>
+
+                {/* Loading State */}
+                {newsLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                    <span className="ml-3 text-sm text-muted">Searching...</span>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {newsError && !newsLoading && (
+                  <div className="rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-sm text-danger">
+                    {newsError}
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {!newsLoading && !newsError && newsResults.length === 0 && (
+                  <div className="text-center py-8 text-muted">
+                    <p>No news found for "{newsSearchQuery}".</p>
+                    <p className="text-xs mt-1">Try a different search term.</p>
+                  </div>
+                )}
+
+                {/* Results List */}
+                {!newsLoading && !newsError && newsResults.length > 0 && (
+                  <div className="space-y-3">
+                    {newsResults.map((article) => (
+                      <article
+                        key={article.id}
+                        className="rounded-lg border border-border bg-ink p-4 hover:border-accent/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <a
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-sm hover:text-accent transition-colors"
+                          >
+                            {article.headline}
+                          </a>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                              sourceColors[article.source] || "bg-slate-500/20 text-slate-400"
+                            }`}
+                          >
+                            {article.source}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs text-slate-400 line-clamp-2">
+                          {article.snippet.length > 150
+                            ? article.snippet.slice(0, 150) + "..."
+                            : article.snippet}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+                          <span>{formatRelativeTime(article.timestamp)}</span>
+                          <span>•</span>
+                          <span>{article.relatedTeams.join(", ")}</span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="grid gap-5 lg:grid-cols-3">
               <article className="rounded-xl border border-border bg-card p-5">
