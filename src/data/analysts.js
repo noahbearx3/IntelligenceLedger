@@ -72,6 +72,64 @@ export const COMMENTS = [
       }
     ]
   },
+  {
+    id: "c5",
+    pickId: "p14",
+    userId: "user-mike",
+    userName: "MikeTheShark",
+    userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=MS&backgroundColor=22c55e",
+    content: "Liverpool at Anfield is always a lock. Salah is in incredible form right now ⚽",
+    upvotes: 15,
+    upvotedBy: [],
+    createdAt: "2025-01-18T10:00:00Z",
+    replies: [
+      {
+        id: "c5-r1",
+        userId: "analyst-007",
+        userName: "Pitch Profits",
+        userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=PP&backgroundColor=00B140",
+        content: "100%. The -1.5 Asian Handicap gives better value than the ML here.",
+        upvotes: 6,
+        upvotedBy: [],
+        createdAt: "2025-01-18T10:30:00Z",
+      }
+    ]
+  },
+  {
+    id: "c6",
+    pickId: "p15",
+    userId: "user-jane",
+    userName: "JaneBets",
+    userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=JB&backgroundColor=ec4899",
+    content: "BTTS is the way to go for these two teams. Both have leaky defenses.",
+    upvotes: 8,
+    upvotedBy: [],
+    createdAt: "2025-01-17T14:00:00Z",
+    replies: []
+  },
+  {
+    id: "c7",
+    pickId: "p21",
+    userId: "user-bob",
+    userName: "Bob",
+    userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=B&backgroundColor=6366f1",
+    content: "Messi + Suarez at home? Easy money 🐐",
+    upvotes: 22,
+    upvotedBy: [],
+    createdAt: "2025-01-18T16:00:00Z",
+    replies: [
+      {
+        id: "c7-r1",
+        userId: "analyst-009",
+        userName: "GOAT Picks",
+        userAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=GP&backgroundColor=F5B5C8",
+        content: "Inter Miami at home is basically free money. The GOAT effect is real 🔥",
+        upvotes: 11,
+        upvotedBy: [],
+        createdAt: "2025-01-18T16:30:00Z",
+      }
+    ]
+  },
 ];
 
 // Reactions on picks
@@ -81,6 +139,13 @@ export const REACTIONS = {
   "p3": { fire: 31, money: 22, bullseye: 14, skull: 0, thinking: 1 },
   "p8": { fire: 15, money: 8, bullseye: 11, skull: 0, thinking: 0 },
   "p10": { fire: 9, money: 6, bullseye: 3, skull: 5, thinking: 4 },
+  // Football picks
+  "p14": { fire: 42, money: 28, bullseye: 15, skull: 1, thinking: 2 },
+  "p15": { fire: 27, money: 18, bullseye: 12, skull: 3, thinking: 4 },
+  "p16": { fire: 35, money: 24, bullseye: 19, skull: 0, thinking: 1 },
+  "p18": { fire: 19, money: 14, bullseye: 8, skull: 2, thinking: 3 },
+  "p21": { fire: 56, money: 45, bullseye: 22, skull: 1, thinking: 2 },
+  "p22": { fire: 23, money: 17, bullseye: 11, skull: 4, thinking: 5 },
 };
 
 export const REACTION_TYPES = [
@@ -246,6 +311,82 @@ export const ANALYSTS = [
       { id: "p13", pick: "Eagles -3 (Live)", odds: -105, units: 1, result: "W", date: "2025-01-16" },
     ],
   },
+  {
+    id: "analyst-007",
+    username: "pitchprofits",
+    displayName: "Pitch Profits",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=PP&backgroundColor=00B140",
+    bio: "⚽ Football specialist. Premier League & La Liga expert. Both Teams To Score & Asian Handicaps.",
+    joinedAt: "2024-05-12",
+    isVerified: true,
+    stats: {
+      followers: 1567,
+      following: 18,
+      totalPicks: 289,
+      winRate: 57.4,
+      roi: 11.2,
+      currentStreak: 3,
+      last30Days: { wins: 19, losses: 13 },
+    },
+    specialties: ["EPL", "La Liga", "BTTS", "Asian Handicaps"],
+    endorsements: ["analyst-001"],
+    recentPicks: [
+      { id: "p14", pick: "Liverpool -1.5 AH", odds: -105, units: 2, result: "W", date: "2025-01-18" },
+      { id: "p15", pick: "Arsenal vs Newcastle BTTS", odds: -110, units: 1, result: "W", date: "2025-01-17" },
+      { id: "p16", pick: "Real Madrid ML", odds: -150, units: 2, result: "W", date: "2025-01-16" },
+      { id: "p17", pick: "Man City Over 2.5", odds: -120, units: 1, result: "L", date: "2025-01-15" },
+    ],
+  },
+  {
+    id: "analyst-008",
+    username: "euroedge",
+    displayName: "Euro Edge",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=EE&backgroundColor=034694",
+    bio: "European football connoisseur. Covers EPL, La Liga, Serie A, Bundesliga. Corners & cards specialist.",
+    joinedAt: "2024-07-20",
+    isVerified: false,
+    stats: {
+      followers: 823,
+      following: 22,
+      totalPicks: 178,
+      winRate: 54.5,
+      roi: 9.1,
+      currentStreak: 2,
+      last30Days: { wins: 15, losses: 12 },
+    },
+    specialties: ["EPL", "La Liga", "Corners", "Cards"],
+    endorsements: ["analyst-007"],
+    recentPicks: [
+      { id: "p18", pick: "Chelsea Over 5.5 corners", odds: -115, units: 1, result: "W", date: "2025-01-18" },
+      { id: "p19", pick: "Barcelona -1", odds: +110, units: 1, result: "W", date: "2025-01-17" },
+      { id: "p20", pick: "Haaland anytime scorer", odds: -130, units: 2, result: "L", date: "2025-01-16" },
+    ],
+  },
+  {
+    id: "analyst-009",
+    username: "goatpicks",
+    displayName: "GOAT Picks",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=GP&backgroundColor=F5B5C8",
+    bio: "🐐 MLS & Liga MX specialist. Following Messi, Suarez & the best in the Americas.",
+    joinedAt: "2024-10-01",
+    isVerified: false,
+    stats: {
+      followers: 445,
+      following: 15,
+      totalPicks: 67,
+      winRate: 59.7,
+      roi: 14.5,
+      currentStreak: 4,
+      last30Days: { wins: 11, losses: 6 },
+    },
+    specialties: ["MLS", "Liga MX", "Totals"],
+    endorsements: [],
+    recentPicks: [
+      { id: "p21", pick: "Inter Miami ML", odds: -140, units: 2, result: "W", date: "2025-01-18" },
+      { id: "p22", pick: "LAFC vs Galaxy Over 3.5", odds: +105, units: 1, result: "W", date: "2025-01-17" },
+      { id: "p23", pick: "Seattle Sounders -0.5 AH", odds: -110, units: 1, result: "W", date: "2025-01-15" },
+    ],
+  },
 ];
 
 // Helper functions
@@ -311,6 +452,14 @@ export const SPECIALTY_COLORS = {
   NBA: { bg: "bg-orange-500/20", text: "text-orange-400" },
   NHL: { bg: "bg-blue-500/20", text: "text-blue-400" },
   MLB: { bg: "bg-red-500/20", text: "text-red-400" },
+  EPL: { bg: "bg-purple-500/20", text: "text-purple-400" },
+  "La Liga": { bg: "bg-yellow-500/20", text: "text-yellow-400" },
+  MLS: { bg: "bg-pink-500/20", text: "text-pink-400" },
+  "Liga MX": { bg: "bg-emerald-500/20", text: "text-emerald-400" },
+  BTTS: { bg: "bg-lime-500/20", text: "text-lime-400" },
+  "Asian Handicaps": { bg: "bg-cyan-500/20", text: "text-cyan-400" },
+  Corners: { bg: "bg-teal-500/20", text: "text-teal-400" },
+  Cards: { bg: "bg-red-500/20", text: "text-red-400" },
   Props: { bg: "bg-purple-500/20", text: "text-purple-400" },
   Spreads: { bg: "bg-cyan-500/20", text: "text-cyan-400" },
   Totals: { bg: "bg-yellow-500/20", text: "text-yellow-400" },

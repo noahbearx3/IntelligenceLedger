@@ -3,6 +3,7 @@ const BASE_URL = "https://api.the-odds-api.com/v4";
 
 // Supported sports
 export const SPORTS = [
+  // American Sports
   { key: "americanfootball_nfl", name: "NFL" },
   { key: "americanfootball_ncaaf", name: "NCAAF" },
   { key: "basketball_nba", name: "NBA" },
@@ -10,7 +11,14 @@ export const SPORTS = [
   { key: "icehockey_nhl", name: "NHL" },
   { key: "baseball_mlb", name: "MLB" },
   { key: "mma_mixed_martial_arts", name: "MMA/UFC" },
-  { key: "soccer_epl", name: "EPL Soccer" },
+  // Football (Soccer)
+  { key: "soccer_epl", name: "EPL ⚽" },
+  { key: "soccer_spain_la_liga", name: "La Liga ⚽" },
+  { key: "soccer_germany_bundesliga", name: "Bundesliga ⚽" },
+  { key: "soccer_italy_serie_a", name: "Serie A ⚽" },
+  { key: "soccer_france_ligue_one", name: "Ligue 1 ⚽" },
+  { key: "soccer_uefa_champs_league", name: "UCL ⚽" },
+  { key: "soccer_usa_mls", name: "MLS ⚽" },
 ];
 
 // US + UK + EU Sportsbooks

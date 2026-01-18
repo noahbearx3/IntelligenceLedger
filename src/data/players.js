@@ -123,9 +123,83 @@ export const MLB_PLAYERS = [
   { name: "Julio Rodriguez", team: "Seattle Mariners", position: "CF", id: "41215" },
 ];
 
+// Premier League Players
+export const EPL_PLAYERS = [
+  // Liverpool
+  { name: "Mohamed Salah", team: "Liverpool", position: "RW", id: "157029" },
+  { name: "Virgil van Dijk", team: "Liverpool", position: "CB", id: "178051" },
+  { name: "Trent Alexander-Arnold", team: "Liverpool", position: "RB", id: "228807" },
+  { name: "Darwin Núñez", team: "Liverpool", position: "ST", id: "227844" },
+  // Arsenal
+  { name: "Bukayo Saka", team: "Arsenal", position: "RW", id: "239809" },
+  { name: "Martin Ødegaard", team: "Arsenal", position: "CAM", id: "174942" },
+  { name: "Declan Rice", team: "Arsenal", position: "CDM", id: "207254" },
+  { name: "William Saliba", team: "Arsenal", position: "CB", id: "244747" },
+  // Manchester City
+  { name: "Erling Haaland", team: "Manchester City", position: "ST", id: "238805" },
+  { name: "Kevin De Bruyne", team: "Manchester City", position: "CAM", id: "51117" },
+  { name: "Phil Foden", team: "Manchester City", position: "LW", id: "242423" },
+  { name: "Rodri", team: "Manchester City", position: "CDM", id: "194165" },
+  // Chelsea
+  { name: "Cole Palmer", team: "Chelsea", position: "RW", id: "266219" },
+  { name: "Enzo Fernández", team: "Chelsea", position: "CM", id: "232760" },
+  { name: "Nicolas Jackson", team: "Chelsea", position: "ST", id: "242299" },
+  // Manchester United
+  { name: "Bruno Fernandes", team: "Manchester United", position: "CAM", id: "141444" },
+  { name: "Marcus Rashford", team: "Manchester United", position: "LW", id: "220932" },
+  { name: "Kobbie Mainoo", team: "Manchester United", position: "CM", id: "286219" },
+  // Tottenham
+  { name: "Son Heung-min", team: "Tottenham", position: "LW", id: "97299" },
+  { name: "James Maddison", team: "Tottenham", position: "CAM", id: "198849" },
+  // Newcastle
+  { name: "Alexander Isak", team: "Newcastle United", position: "ST", id: "193071" },
+  { name: "Bruno Guimarães", team: "Newcastle United", position: "CM", id: "232752" },
+  // Aston Villa
+  { name: "Ollie Watkins", team: "Aston Villa", position: "ST", id: "187672" },
+];
+
+// La Liga Players
+export const LALIGA_PLAYERS = [
+  // Real Madrid
+  { name: "Vinícius Jr", team: "Real Madrid", position: "LW", id: "225656" },
+  { name: "Jude Bellingham", team: "Real Madrid", position: "CAM", id: "247210" },
+  { name: "Kylian Mbappé", team: "Real Madrid", position: "ST", id: "226190" },
+  { name: "Federico Valverde", team: "Real Madrid", position: "CM", id: "219612" },
+  // Barcelona
+  { name: "Lamine Yamal", team: "Barcelona", position: "RW", id: "317117" },
+  { name: "Pedri", team: "Barcelona", position: "CM", id: "247100" },
+  { name: "Raphinha", team: "Barcelona", position: "LW", id: "204070" },
+  { name: "Robert Lewandowski", team: "Barcelona", position: "ST", id: "44986" },
+  // Atlético Madrid
+  { name: "Antoine Griezmann", team: "Atlético Madrid", position: "ST", id: "76004" },
+  { name: "Julián Álvarez", team: "Atlético Madrid", position: "ST", id: "253376" },
+];
+
+// MLS Players
+export const MLS_PLAYERS = [
+  { name: "Lionel Messi", team: "Inter Miami", position: "RW", id: "45843" },
+  { name: "Luis Suárez", team: "Inter Miami", position: "ST", id: "47720" },
+  { name: "Sergio Busquets", team: "Inter Miami", position: "CDM", id: "51198" },
+  { name: "Riqui Puig", team: "LA Galaxy", position: "CM", id: "256927" },
+  { name: "Denis Bouanga", team: "LAFC", position: "LW", id: "148431" },
+  { name: "Cucho Hernández", team: "Columbus Crew", position: "ST", id: "231096" },
+  { name: "Hany Mukhtar", team: "Seattle Sounders", position: "CAM", id: "174952" },
+  { name: "Thiago Almada", team: "Atlanta United", position: "CAM", id: "276098" },
+];
+
 // Get headshot URL for a player
 export function getHeadshotUrl(playerId, league) {
-  const leaguePath = league.toLowerCase();
+  // Map league names to ESPN paths
+  const leaguePathMap = {
+    nfl: "nfl",
+    nba: "nba",
+    nhl: "nhl",
+    mlb: "mlb",
+    epl: "soccer",
+    laliga: "soccer",
+    mls: "soccer",
+  };
+  const leaguePath = leaguePathMap[league.toLowerCase()] || league.toLowerCase();
   return `https://a.espncdn.com/combiner/i?img=/i/headshots/${leaguePath}/players/full/${playerId}.png&h=80&w=80`;
 }
 
@@ -138,17 +212,21 @@ export const PLAYERS_BY_LEAGUE = {
   NBA: NBA_PLAYERS,
   NHL: NHL_PLAYERS,
   MLB: MLB_PLAYERS,
+  EPL: EPL_PLAYERS,
+  "La Liga": LALIGA_PLAYERS,
+  MLS: MLS_PLAYERS,
 };
 
 // All players flattened
-export const ALL_PLAYERS = [...NFL_PLAYERS, ...NBA_PLAYERS, ...NHL_PLAYERS, ...MLB_PLAYERS];
+export const ALL_PLAYERS = [...NFL_PLAYERS, ...NBA_PLAYERS, ...NHL_PLAYERS, ...MLB_PLAYERS, ...EPL_PLAYERS, ...LALIGA_PLAYERS, ...MLS_PLAYERS];
 
 // Featured players
 export const FEATURED_PLAYERS = [
   { ...NFL_PLAYERS.find(p => p.name === "Patrick Mahomes"), league: "NFL", trending: "🏈 MVP candidate" },
   { ...NBA_PLAYERS.find(p => p.name === "Nikola Jokic"), league: "NBA", trending: "🏀 Triple-double machine" },
-  { ...NHL_PLAYERS.find(p => p.name === "Connor McDavid"), league: "NHL", trending: "🏒 Point leader" },
-  { ...MLB_PLAYERS.find(p => p.name === "Shohei Ohtani"), league: "MLB", trending: "⚾ Historic season" },
+  { ...EPL_PLAYERS.find(p => p.name === "Erling Haaland"), league: "EPL", trending: "⚽ Golden Boot leader" },
+  { ...EPL_PLAYERS.find(p => p.name === "Mohamed Salah"), league: "EPL", trending: "🔥 On fire" },
+  { ...MLS_PLAYERS.find(p => p.name === "Lionel Messi"), league: "MLS", trending: "🐐 The GOAT" },
 ];
 
 // Find player by name
@@ -192,4 +270,12 @@ export const POSITION_COLORS = {
   CF: { bg: "bg-green-500/20", text: "text-green-400" },
   RF: { bg: "bg-blue-500/20", text: "text-blue-400" },
   LF: { bg: "bg-purple-500/20", text: "text-purple-400" },
+  // Football (Soccer)
+  ST: { bg: "bg-red-500/20", text: "text-red-400" },
+  CAM: { bg: "bg-orange-500/20", text: "text-orange-400" },
+  CM: { bg: "bg-green-500/20", text: "text-green-400" },
+  CDM: { bg: "bg-teal-500/20", text: "text-teal-400" },
+  CB: { bg: "bg-blue-500/20", text: "text-blue-400" },
+  LB: { bg: "bg-cyan-500/20", text: "text-cyan-400" },
+  GK: { bg: "bg-yellow-500/20", text: "text-yellow-400" },
 };

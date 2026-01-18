@@ -1873,8 +1873,8 @@ export default function App() {
           {/* Filters */}
           <div className="flex flex-wrap gap-3">
             {/* Specialty Filter */}
-            <div className="flex gap-1 rounded-lg bg-ink p-1">
-              {["all", "NFL", "NBA", "NHL", "MLB"].map((filter) => (
+            <div className="flex flex-wrap gap-1 rounded-lg bg-ink p-1">
+              {["all", "NFL", "NBA", "NHL", "MLB", "EPL", "La Liga", "MLS"].map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setDiscoverFilter(filter)}

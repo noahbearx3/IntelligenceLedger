@@ -137,9 +137,73 @@ export const MLB_TEAMS = [
   { name: "San Francisco Giants", abbr: "sf", primary: "#FD5A1E", secondary: "#27251F" },
 ];
 
+// Premier League Teams
+export const EPL_TEAMS = [
+  { name: "Arsenal", abbr: "ars", primary: "#EF0107", secondary: "#FFFFFF" },
+  { name: "Aston Villa", abbr: "avl", primary: "#670E36", secondary: "#95BFE5" },
+  { name: "Bournemouth", abbr: "bou", primary: "#DA291C", secondary: "#000000" },
+  { name: "Brentford", abbr: "bre", primary: "#E30613", secondary: "#FFB81C" },
+  { name: "Brighton", abbr: "bha", primary: "#0057B8", secondary: "#FFFFFF" },
+  { name: "Chelsea", abbr: "che", primary: "#034694", secondary: "#DBA111" },
+  { name: "Crystal Palace", abbr: "cry", primary: "#1B458F", secondary: "#C4122E" },
+  { name: "Everton", abbr: "eve", primary: "#003399", secondary: "#FFFFFF" },
+  { name: "Fulham", abbr: "ful", primary: "#000000", secondary: "#FFFFFF" },
+  { name: "Ipswich Town", abbr: "ips", primary: "#0033A0", secondary: "#FFFFFF" },
+  { name: "Leicester City", abbr: "lei", primary: "#003090", secondary: "#FDBE11" },
+  { name: "Liverpool", abbr: "liv", primary: "#C8102E", secondary: "#00B2A9" },
+  { name: "Manchester City", abbr: "mci", primary: "#6CABDD", secondary: "#1C2C5B" },
+  { name: "Manchester United", abbr: "mun", primary: "#DA291C", secondary: "#FBE122" },
+  { name: "Newcastle United", abbr: "new", primary: "#241F20", secondary: "#FFFFFF" },
+  { name: "Nottingham Forest", abbr: "nfo", primary: "#DD0000", secondary: "#FFFFFF" },
+  { name: "Southampton", abbr: "sou", primary: "#D71920", secondary: "#130C0E" },
+  { name: "Tottenham", abbr: "tot", primary: "#132257", secondary: "#FFFFFF" },
+  { name: "West Ham", abbr: "whu", primary: "#7A263A", secondary: "#1BB1E7" },
+  { name: "Wolves", abbr: "wol", primary: "#FDB913", secondary: "#231F20" },
+];
+
+// La Liga Teams  
+export const LALIGA_TEAMS = [
+  { name: "Real Madrid", abbr: "rma", primary: "#FFFFFF", secondary: "#00529F" },
+  { name: "Barcelona", abbr: "bar", primary: "#004D98", secondary: "#A50044" },
+  { name: "Atlético Madrid", abbr: "atm", primary: "#CB3524", secondary: "#272E61" },
+  { name: "Athletic Bilbao", abbr: "ath", primary: "#EE2523", secondary: "#FFFFFF" },
+  { name: "Real Sociedad", abbr: "rso", primary: "#0067B1", secondary: "#FFFFFF" },
+  { name: "Villarreal", abbr: "vil", primary: "#FFE114", secondary: "#005DAA" },
+  { name: "Real Betis", abbr: "bet", primary: "#00954C", secondary: "#FFFFFF" },
+  { name: "Sevilla", abbr: "sev", primary: "#F43333", secondary: "#FFFFFF" },
+  { name: "Valencia", abbr: "val", primary: "#EE3524", secondary: "#FDBE11" },
+  { name: "Girona", abbr: "gir", primary: "#CD2534", secondary: "#FFFFFF" },
+];
+
+// MLS Teams
+export const MLS_TEAMS = [
+  { name: "Inter Miami", abbr: "mia", primary: "#F5B5C8", secondary: "#231F20" },
+  { name: "LA Galaxy", abbr: "lag", primary: "#00245D", secondary: "#FFD200" },
+  { name: "LAFC", abbr: "lafc", primary: "#C39E6D", secondary: "#000000" },
+  { name: "Atlanta United", abbr: "atl", primary: "#80000A", secondary: "#231F20" },
+  { name: "Seattle Sounders", abbr: "sea", primary: "#658D1B", secondary: "#002A5C" },
+  { name: "Columbus Crew", abbr: "clb", primary: "#FEDD00", secondary: "#231F20" },
+  { name: "FC Cincinnati", abbr: "cin", primary: "#F05323", secondary: "#263B80" },
+  { name: "New York Red Bulls", abbr: "rbny", primary: "#ED1E36", secondary: "#FFCD00" },
+  { name: "NYCFC", abbr: "nyc", primary: "#6CACE4", secondary: "#041E42" },
+  { name: "Philadelphia Union", abbr: "phi", primary: "#071B2C", secondary: "#B18500" },
+  { name: "Portland Timbers", abbr: "por", primary: "#004812", secondary: "#EBE72B" },
+  { name: "Austin FC", abbr: "atx", primary: "#00B140", secondary: "#000000" },
+];
+
 // Get logo URL for a team
 export function getLogoUrl(abbr, league) {
-  const leaguePath = league.toLowerCase();
+  // Map league names to ESPN paths
+  const leaguePathMap = {
+    nfl: "nfl",
+    nba: "nba",
+    nhl: "nhl",
+    mlb: "mlb",
+    epl: "soccer/eng.1",
+    laliga: "soccer/esp.1",
+    mls: "soccer/usa.1",
+  };
+  const leaguePath = leaguePathMap[league.toLowerCase()] || league.toLowerCase();
   return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/${leaguePath}/500/${abbr}.png&h=100&w=100`;
 }
 
@@ -149,17 +213,21 @@ export const TEAMS_BY_LEAGUE = {
   NBA: NBA_TEAMS,
   NHL: NHL_TEAMS,
   MLB: MLB_TEAMS,
+  EPL: EPL_TEAMS,
+  "La Liga": LALIGA_TEAMS,
+  MLS: MLS_TEAMS,
 };
 
 // Flatten all teams
-export const ALL_TEAMS = [...NFL_TEAMS, ...NBA_TEAMS, ...NHL_TEAMS, ...MLB_TEAMS];
+export const ALL_TEAMS = [...NFL_TEAMS, ...NBA_TEAMS, ...NHL_TEAMS, ...MLB_TEAMS, ...EPL_TEAMS, ...LALIGA_TEAMS, ...MLS_TEAMS];
 
 // Featured teams
 export const FEATURED_TEAMS = [
   { ...NFL_TEAMS.find(t => t.name === "Buffalo Bills"), league: "NFL", trending: "🔥 Hot" },
   { ...NFL_TEAMS.find(t => t.name === "Kansas City Chiefs"), league: "NFL", trending: "📈 Playoff bound" },
   { ...NBA_TEAMS.find(t => t.name === "Boston Celtics"), league: "NBA", trending: "🏆 Title favorites" },
-  { ...MLB_TEAMS.find(t => t.name === "Los Angeles Dodgers"), league: "MLB", trending: "⭐ Star power" },
+  { ...EPL_TEAMS.find(t => t.name === "Liverpool"), league: "EPL", trending: "⚽ Top of table" },
+  { ...EPL_TEAMS.find(t => t.name === "Arsenal"), league: "EPL", trending: "🎯 Title race" },
 ];
 
 // Find team by name
