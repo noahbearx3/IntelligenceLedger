@@ -18,6 +18,7 @@ const ESPN_LEAGUES = {
   "NHL": { sport: "hockey", league: "nhl" },
   "NCAAF": { sport: "football", league: "college-football" },
   "NCAAB": { sport: "basketball", league: "mens-college-basketball" },
+  "WNBA": { sport: "basketball", league: "wnba" },
   
   // Soccer
   "EPL": { sport: "soccer", league: "eng.1" },
@@ -27,6 +28,13 @@ const ESPN_LEAGUES = {
   "Ligue 1": { sport: "soccer", league: "fra.1" },
   "MLS": { sport: "soccer", league: "usa.1" },
   "Champions League": { sport: "soccer", league: "uefa.champions" },
+  
+  // Motorsports
+  "F1": { sport: "racing", league: "f1" },
+  "NASCAR": { sport: "racing", league: "nascar-cup" },
+  
+  // Combat Sports
+  "UFC": { sport: "mma", league: "ufc" },
 };
 
 // ESPN team IDs (for schedule lookups)
@@ -138,6 +146,115 @@ const ESPN_TEAM_IDS = {
   "Atlanta United": { league: "MLS", id: 6461 },
   "Seattle Sounders": { league: "MLS", id: 242 },
   "Columbus Crew": { league: "MLS", id: 8036 },
+  "FC Cincinnati": { league: "MLS", id: 8289 },
+  "New York Red Bulls": { league: "MLS", id: 399 },
+  "NYCFC": { league: "MLS", id: 6510 },
+  "Philadelphia Union": { league: "MLS", id: 8458 },
+  "Portland Timbers": { league: "MLS", id: 8459 },
+  "Austin FC": { league: "MLS", id: 10953 },
+  
+  // MLB - American League East
+  "New York Yankees": { league: "MLB", id: 10 },
+  "Boston Red Sox": { league: "MLB", id: 2 },
+  "Toronto Blue Jays": { league: "MLB", id: 14 },
+  "Tampa Bay Rays": { league: "MLB", id: 30 },
+  "Baltimore Orioles": { league: "MLB", id: 1 },
+  // MLB - American League Central
+  "Chicago White Sox": { league: "MLB", id: 4 },
+  "Cleveland Guardians": { league: "MLB", id: 5 },
+  "Detroit Tigers": { league: "MLB", id: 6 },
+  "Kansas City Royals": { league: "MLB", id: 7 },
+  "Minnesota Twins": { league: "MLB", id: 9 },
+  // MLB - American League West
+  "Houston Astros": { league: "MLB", id: 18 },
+  "Los Angeles Angels": { league: "MLB", id: 3 },
+  "Oakland Athletics": { league: "MLB", id: 11 },
+  "Seattle Mariners": { league: "MLB", id: 12 },
+  "Texas Rangers": { league: "MLB", id: 13 },
+  // MLB - National League East
+  "Atlanta Braves": { league: "MLB", id: 15 },
+  "Miami Marlins": { league: "MLB", id: 28 },
+  "New York Mets": { league: "MLB", id: 21 },
+  "Philadelphia Phillies": { league: "MLB", id: 22 },
+  "Washington Nationals": { league: "MLB", id: 20 },
+  // MLB - National League Central
+  "Chicago Cubs": { league: "MLB", id: 16 },
+  "Cincinnati Reds": { league: "MLB", id: 17 },
+  "Milwaukee Brewers": { league: "MLB", id: 8 },
+  "Pittsburgh Pirates": { league: "MLB", id: 23 },
+  "St. Louis Cardinals": { league: "MLB", id: 24 },
+  // MLB - National League West
+  "Arizona Diamondbacks": { league: "MLB", id: 29 },
+  "Colorado Rockies": { league: "MLB", id: 27 },
+  "Los Angeles Dodgers": { league: "MLB", id: 19 },
+  "San Diego Padres": { league: "MLB", id: 25 },
+  "San Francisco Giants": { league: "MLB", id: 26 },
+  
+  // NHL - Atlantic Division
+  "Boston Bruins": { league: "NHL", id: 1 },
+  "Buffalo Sabres": { league: "NHL", id: 2 },
+  "Detroit Red Wings": { league: "NHL", id: 5 },
+  "Florida Panthers": { league: "NHL", id: 13 },
+  "Montreal Canadiens": { league: "NHL", id: 8 },
+  "Ottawa Senators": { league: "NHL", id: 9 },
+  "Tampa Bay Lightning": { league: "NHL", id: 14 },
+  "Toronto Maple Leafs": { league: "NHL", id: 10 },
+  // NHL - Metropolitan Division
+  "Carolina Hurricanes": { league: "NHL", id: 7 },
+  "Columbus Blue Jackets": { league: "NHL", id: 29 },
+  "New Jersey Devils": { league: "NHL", id: 1 },
+  "New York Islanders": { league: "NHL", id: 2 },
+  "New York Rangers": { league: "NHL", id: 3 },
+  "Philadelphia Flyers": { league: "NHL", id: 4 },
+  "Pittsburgh Penguins": { league: "NHL", id: 5 },
+  "Washington Capitals": { league: "NHL", id: 15 },
+  // NHL - Central Division
+  "Arizona Coyotes": { league: "NHL", id: 24 },
+  "Chicago Blackhawks": { league: "NHL", id: 4 },
+  "Colorado Avalanche": { league: "NHL", id: 17 },
+  "Dallas Stars": { league: "NHL", id: 25 },
+  "Minnesota Wild": { league: "NHL", id: 30 },
+  "Nashville Predators": { league: "NHL", id: 18 },
+  "St. Louis Blues": { league: "NHL", id: 19 },
+  "Winnipeg Jets": { league: "NHL", id: 28 },
+  // NHL - Pacific Division
+  "Anaheim Ducks": { league: "NHL", id: 24 },
+  "Calgary Flames": { league: "NHL", id: 20 },
+  "Edmonton Oilers": { league: "NHL", id: 22 },
+  "Los Angeles Kings": { league: "NHL", id: 26 },
+  "San Jose Sharks": { league: "NHL", id: 28 },
+  "Seattle Kraken": { league: "NHL", id: 32 },
+  "Vegas Golden Knights": { league: "NHL", id: 37 },
+  "Vancouver Canucks": { league: "NHL", id: 23 },
+  
+  // College Football (Top 25)
+  "Alabama Crimson Tide": { league: "NCAAF", id: 333 },
+  "Georgia Bulldogs": { league: "NCAAF", id: 61 },
+  "Michigan Wolverines": { league: "NCAAF", id: 130 },
+  "Ohio State Buckeyes": { league: "NCAAF", id: 194 },
+  "Texas Longhorns": { league: "NCAAF", id: 251 },
+  "USC Trojans": { league: "NCAAF", id: 30 },
+  "Oregon Ducks": { league: "NCAAF", id: 2483 },
+  "Penn State Nittany Lions": { league: "NCAAF", id: 213 },
+  "Florida State Seminoles": { league: "NCAAF", id: 52 },
+  "Clemson Tigers": { league: "NCAAF", id: 228 },
+  "LSU Tigers": { league: "NCAAF", id: 99 },
+  "Notre Dame Fighting Irish": { league: "NCAAF", id: 87 },
+  "Tennessee Volunteers": { league: "NCAAF", id: 2633 },
+  "Oklahoma Sooners": { league: "NCAAF", id: 201 },
+  "Miami Hurricanes": { league: "NCAAF", id: 2390 },
+  
+  // College Basketball (Top Programs)
+  "Duke Blue Devils": { league: "NCAAB", id: 150 },
+  "North Carolina Tar Heels": { league: "NCAAB", id: 153 },
+  "Kansas Jayhawks": { league: "NCAAB", id: 2305 },
+  "Kentucky Wildcats": { league: "NCAAB", id: 96 },
+  "UCLA Bruins": { league: "NCAAB", id: 26 },
+  "Gonzaga Bulldogs": { league: "NCAAB", id: 2250 },
+  "UConn Huskies": { league: "NCAAB", id: 41 },
+  "Purdue Boilermakers": { league: "NCAAB", id: 2509 },
+  "Arizona Wildcats": { league: "NCAAB", id: 12 },
+  "Houston Cougars": { league: "NCAAB", id: 248 },
 };
 
 export default async function handler(req, res) {

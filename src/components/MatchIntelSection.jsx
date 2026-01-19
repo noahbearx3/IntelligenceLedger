@@ -176,7 +176,7 @@ export default function MatchIntelSection({ teamName, league }) {
             {activeTab === "lineup" && <LineupTab lineup={data.lineup} />}
             {activeTab === "h2h" && <H2HTab h2h={data.h2h} teamName={teamName} />}
             {activeTab === "injuries" && <InjuriesTab injuries={data.injuries} />}
-            {activeTab === "table" && <StandingsTab standings={data.standings} teamName={teamName} />}
+            {activeTab === "table" && <StandingsTab standings={data.standings} teamName={teamName} league={teamLeague} />}
           </>
         )}
       </div>
@@ -538,73 +538,181 @@ function InjuriesTab({ injuries }) {
   );
 }
 
-// Standings Tab
-function StandingsTab({ standings, teamName }) {
+// Standings Tab - Sport-Specific Display
+function StandingsTab({ standings, teamName, league }) {
   if (!standings || standings.length === 0) {
     return <EmptyState icon="🏆" message="Standings unavailable" />;
   }
 
-  return (
-    <div className="rounded-xl bg-ink border border-border overflow-hidden overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="text-center p-3 text-xs text-text-muted font-medium w-8">#</th>
-            <th className="text-left p-3 text-xs text-text-muted font-medium">Team</th>
-            <th className="text-center p-3 text-xs text-text-muted font-medium">P</th>
-            <th className="text-center p-3 text-xs text-text-muted font-medium">W</th>
-            <th className="text-center p-3 text-xs text-text-muted font-medium">D</th>
-            <th className="text-center p-3 text-xs text-text-muted font-medium">L</th>
-            <th className="text-center p-3 text-xs text-text-muted font-medium">GD</th>
-            <th className="text-center p-3 text-xs text-text-muted font-medium font-bold">Pts</th>
-            <th className="text-center p-3 text-xs text-text-muted font-medium">Form</th>
-          </tr>
-        </thead>
-        <tbody>
-          {standings.map((team, i) => (
-            <tr 
-              key={i} 
-              className={`border-b border-border/50 last:border-0 ${
-                team.name === teamName ? "bg-accent/10" : ""
-              }`}
-            >
-              <td className="p-3 text-center">
-                <span className={`${
-                  team.rank <= 4 ? "text-success" : 
-                  team.rank >= 18 ? "text-danger" : "text-text-muted"
-                }`}>
-                  {team.rank}
-                </span>
-              </td>
-              <td className={`p-3 ${team.name === teamName ? "text-accent font-medium" : "text-text-primary"}`}>
-                {team.name}
-              </td>
-              <td className="p-3 text-center text-text-muted">{team.played}</td>
-              <td className="p-3 text-center text-success">{team.won}</td>
-              <td className="p-3 text-center text-warning">{team.drawn}</td>
-              <td className="p-3 text-center text-danger">{team.lost}</td>
-              <td className="p-3 text-center text-text-muted">{team.gd > 0 ? `+${team.gd}` : team.gd}</td>
-              <td className="p-3 text-center font-bold text-text-primary">{team.points}</td>
-              <td className="p-3">
-                <div className="flex justify-center gap-0.5">
-                  {team.form?.split("").slice(0, 5).map((r, j) => (
-                    <span
-                      key={j}
-                      className={`w-4 h-4 rounded-sm text-[10px] font-bold flex items-center justify-center ${
-                        r === "W" ? "bg-success/20 text-success" :
-                        r === "D" ? "bg-warning/20 text-warning" :
-                        "bg-danger/20 text-danger"
-                      }`}
-                    >
-                      {r}
-                    </span>
-                  ))}
-                </div>
-              </td>
+  // Detect sport type from standings data
+  const isSoccer = standings[0]?.points > 0 || ["EPL", "La Liga", "MLS", "Bundesliga", "Serie A", "Ligue 1"].includes(league);
+  const hasDraws = standings.some(t => t.drawn > 0);
+  
+  // Group by division for US sports
+  const divisions = [...new Set(standings.map(t => t.division).filter(Boolean))];
+  const hasDivisions = divisions.length > 1;
+
+  // Soccer standings (Points-based)
+  if (isSoccer || hasDraws) {
+    return (
+      <div className="rounded-xl bg-ink border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-center p-3 text-xs text-text-muted font-medium w-8">#</th>
+              <th className="text-left p-3 text-xs text-text-muted font-medium">Team</th>
+              <th className="text-center p-3 text-xs text-text-muted font-medium">P</th>
+              <th className="text-center p-3 text-xs text-text-muted font-medium">W</th>
+              <th className="text-center p-3 text-xs text-text-muted font-medium">D</th>
+              <th className="text-center p-3 text-xs text-text-muted font-medium">L</th>
+              <th className="text-center p-3 text-xs text-text-muted font-medium">GD</th>
+              <th className="text-center p-3 text-xs text-text-muted font-medium font-bold">Pts</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {standings.map((team, i) => (
+              <tr 
+                key={i} 
+                className={`border-b border-border/50 last:border-0 ${
+                  team.name === teamName ? "bg-accent/10" : ""
+                }`}
+              >
+                <td className="p-3 text-center">
+                  <span className={`${
+                    team.rank <= 4 ? "text-success" : 
+                    team.rank >= 18 ? "text-danger" : "text-text-muted"
+                  }`}>
+                    {team.rank}
+                  </span>
+                </td>
+                <td className="p-3">
+                  <div className="flex items-center gap-2">
+                    {team.logo && <TeamLogo logo={team.logo} name={team.name} size="w-5 h-5" />}
+                    <span className={team.name === teamName ? "text-accent font-medium" : "text-text-primary"}>
+                      {team.name}
+                    </span>
+                  </div>
+                </td>
+                <td className="p-3 text-center text-text-muted">{team.played}</td>
+                <td className="p-3 text-center text-success">{team.won}</td>
+                <td className="p-3 text-center text-warning">{team.drawn}</td>
+                <td className="p-3 text-center text-danger">{team.lost}</td>
+                <td className="p-3 text-center text-text-muted">{team.gd > 0 ? `+${team.gd}` : team.gd}</td>
+                <td className="p-3 text-center font-bold text-text-primary">{team.points}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  // US Sports standings (Win Percentage-based)
+  return (
+    <div className="space-y-4">
+      {hasDivisions ? (
+        // Group by division
+        divisions.map(division => (
+          <div key={division} className="rounded-xl bg-ink border border-border overflow-hidden">
+            <div className="px-4 py-2 bg-surface border-b border-border">
+              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">{division}</span>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-3 text-xs text-text-muted font-medium">Team</th>
+                  <th className="text-center p-3 text-xs text-text-muted font-medium">W</th>
+                  <th className="text-center p-3 text-xs text-text-muted font-medium">L</th>
+                  <th className="text-center p-3 text-xs text-text-muted font-medium">PCT</th>
+                  <th className="text-center p-3 text-xs text-text-muted font-medium">PF</th>
+                  <th className="text-center p-3 text-xs text-text-muted font-medium">PA</th>
+                  <th className="text-center p-3 text-xs text-text-muted font-medium">STRK</th>
+                </tr>
+              </thead>
+              <tbody>
+                {standings.filter(t => t.division === division).map((team, i) => (
+                  <tr 
+                    key={i} 
+                    className={`border-b border-border/50 last:border-0 ${
+                      team.name === teamName ? "bg-accent/10" : ""
+                    }`}
+                  >
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        {team.logo && <TeamLogo logo={team.logo} name={team.name} size="w-5 h-5" />}
+                        <span className={team.name === teamName ? "text-accent font-medium" : "text-text-primary"}>
+                          {team.abbreviation || team.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-3 text-center text-success font-semibold">{team.won}</td>
+                    <td className="p-3 text-center text-danger">{team.lost}</td>
+                    <td className="p-3 text-center font-mono font-semibold">
+                      {team.winPct ? (team.winPct * 1).toFixed(3).replace(/^0/, '') : '.000'}
+                    </td>
+                    <td className="p-3 text-center text-text-muted">{team.gf || '-'}</td>
+                    <td className="p-3 text-center text-text-muted">{team.ga || '-'}</td>
+                    <td className="p-3 text-center">
+                      {team.streak ? (
+                        <span className={`text-xs font-medium ${
+                          String(team.streak).startsWith('W') ? 'text-success' : 
+                          String(team.streak).startsWith('L') ? 'text-danger' : 'text-text-muted'
+                        }`}>
+                          {team.streak}
+                        </span>
+                      ) : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))
+      ) : (
+        // Single table without divisions
+        <div className="rounded-xl bg-ink border border-border overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-center p-3 text-xs text-text-muted font-medium w-8">#</th>
+                <th className="text-left p-3 text-xs text-text-muted font-medium">Team</th>
+                <th className="text-center p-3 text-xs text-text-muted font-medium">W</th>
+                <th className="text-center p-3 text-xs text-text-muted font-medium">L</th>
+                <th className="text-center p-3 text-xs text-text-muted font-medium">PCT</th>
+                <th className="text-center p-3 text-xs text-text-muted font-medium">PF</th>
+                <th className="text-center p-3 text-xs text-text-muted font-medium">PA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {standings.map((team, i) => (
+                <tr 
+                  key={i} 
+                  className={`border-b border-border/50 last:border-0 ${
+                    team.name === teamName ? "bg-accent/10" : ""
+                  }`}
+                >
+                  <td className="p-3 text-center text-text-muted">{i + 1}</td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      {team.logo && <TeamLogo logo={team.logo} name={team.name} size="w-5 h-5" />}
+                      <span className={team.name === teamName ? "text-accent font-medium" : "text-text-primary"}>
+                        {team.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-3 text-center text-success font-semibold">{team.won}</td>
+                  <td className="p-3 text-center text-danger">{team.lost}</td>
+                  <td className="p-3 text-center font-mono font-semibold">
+                    {team.winPct ? (team.winPct * 1).toFixed(3).replace(/^0/, '') : '.000'}
+                  </td>
+                  <td className="p-3 text-center text-text-muted">{team.gf || '-'}</td>
+                  <td className="p-3 text-center text-text-muted">{team.ga || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
