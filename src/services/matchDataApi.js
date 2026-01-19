@@ -207,26 +207,28 @@ async function callApi(type, params) {
  */
 export async function getNextFixture(teamName) {
   if (!TEAM_IDS[teamName]) {
-    console.log(`⚠️ Unknown team: ${teamName}, using mock`);
-    return getMockNextFixture(teamName);
+    console.log(`⚠️ Unknown team: ${teamName}`);
+    return null; // Return null instead of mock - let UI handle it
   }
 
   const data = await callApi("team", { teamName });
   
   if (!data || !data.nextFixture) {
-    console.log(`⚠️ No fixture from API for ${teamName}, using mock`);
-    return getMockNextFixture(teamName);
+    console.log(`ℹ️ No upcoming games scheduled for ${teamName}`);
+    return null; // Return null - no mock data
   }
 
   const fixture = data.nextFixture;
   return {
     id: fixture.id || Date.now(),
+    name: fixture.name || `${fixture.home} vs ${fixture.away}`,
     date: fixture.date,
     venue: fixture.venue || "TBD",
-    home: { name: fixture.home, logo: null },
-    away: { name: fixture.away, logo: null },
+    home: { name: fixture.home, logo: fixture.homeLogo },
+    away: { name: fixture.away, logo: fixture.awayLogo },
     league: data.league || "League",
     broadcast: fixture.broadcast || "",
+    status: fixture.status || "Scheduled",
   };
 }
 
@@ -235,25 +237,28 @@ export async function getNextFixture(teamName) {
  */
 export async function getTeamForm(teamName) {
   if (!TEAM_IDS[teamName]) {
-    console.log(`⚠️ Unknown team: ${teamName}, using mock form`);
-    return getMockTeamForm(teamName);
+    console.log(`⚠️ Unknown team: ${teamName}`);
+    return []; // Return empty - let UI handle it
   }
 
   const data = await callApi("team", { teamName });
   
   if (!data || !data.form || data.form.length === 0) {
-    console.log(`⚠️ No form from API for ${teamName}, using mock`);
-    return getMockTeamForm(teamName);
+    console.log(`ℹ️ No recent results for ${teamName}`);
+    return []; // Return empty - no mock data
   }
 
   return data.form.map((match, i) => ({
     id: match.id || i,
     date: match.date || new Date().toISOString(),
     home: match.home,
+    homeLogo: match.homeLogo,
     away: match.away,
+    awayLogo: match.awayLogo,
     homeGoals: match.homeGoals || 0,
     awayGoals: match.awayGoals || 0,
     result: match.result || "D",
+    status: match.status || "Final",
   }));
 }
 
@@ -283,20 +288,21 @@ export async function getInjuries(teamName) {
  */
 export async function getStandings(league) {
   if (!LEAGUE_IDS[league]) {
-    console.log(`⚠️ Unknown league: ${league}, using mock standings`);
-    return getMockStandings(league);
+    console.log(`⚠️ Unknown league: ${league}`);
+    return []; // Return empty - let UI handle it
   }
 
   const data = await callApi("standings", { league });
   
   if (!data || data.length === 0 || data.error) {
-    console.log(`⚠️ No standings from API for ${league}, using mock`);
-    return getMockStandings(league);
+    console.log(`ℹ️ Standings unavailable for ${league}`);
+    return []; // Return empty - no mock data
   }
 
   return data.slice(0, 20).map(team => ({
     rank: team.rank,
     name: team.name,
+    abbreviation: team.abbreviation || "",
     logo: team.logo || null,
     played: team.played || 0,
     won: team.won || 0,
@@ -307,7 +313,9 @@ export async function getStandings(league) {
     gd: team.gd || 0,
     points: team.points || 0,
     winPct: team.winPct || 0,
+    streak: team.streak || 0,
     form: team.form || "",
+    division: team.division || "",
   }));
 }
 

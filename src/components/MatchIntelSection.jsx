@@ -189,6 +189,40 @@ function LoadingSpinner() {
   );
 }
 
+// Empty State Component
+function EmptyState({ icon, message }) {
+  return (
+    <div className="rounded-xl bg-ink border border-border p-6 text-center">
+      <div className="text-2xl mb-2">{icon}</div>
+      <p className="text-text-muted text-sm">{message}</p>
+    </div>
+  );
+}
+
+// Team Logo with Fallback
+function TeamLogo({ logo, name, size = "w-8 h-8" }) {
+  const [hasError, setHasError] = useState(false);
+  
+  if (!logo || hasError) {
+    // Show initials as fallback
+    const initials = name?.split(" ").map(w => w[0]).join("").slice(0, 2) || "?";
+    return (
+      <div className={`${size} rounded-full bg-surface flex items-center justify-center text-xs font-bold text-text-muted`}>
+        {initials}
+      </div>
+    );
+  }
+  
+  return (
+    <img 
+      src={logo} 
+      alt={name} 
+      className={`${size} object-contain`}
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
 // Overview Tab
 function OverviewTab({ fixture, form, injuries, teamName }) {
   const formString = form.slice(0, 5).map(m => m.result).join("");
@@ -196,17 +230,24 @@ function OverviewTab({ fixture, form, injuries, teamName }) {
   return (
     <div className="space-y-4">
       {/* Next Match Card */}
-      {fixture && (
+      {fixture ? (
         <div className="rounded-xl bg-ink border border-border p-4">
-          <div className="text-xs text-text-muted mb-2">Next Match</div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs text-text-muted">Next Match</div>
+            {fixture.broadcast && (
+              <div className="text-xs text-accent">{fixture.broadcast}</div>
+            )}
+          </div>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-center">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <TeamLogo logo={fixture.home.logo} name={fixture.home.name} />
                 <div className="font-semibold text-text-primary">{fixture.home.name}</div>
               </div>
               <div className="text-xl font-bold text-text-muted">vs</div>
-              <div className="text-center">
+              <div className="flex items-center gap-2">
                 <div className="font-semibold text-text-primary">{fixture.away.name}</div>
+                <TeamLogo logo={fixture.away.logo} name={fixture.away.name} />
               </div>
             </div>
             <div className="text-right">
@@ -221,6 +262,8 @@ function OverviewTab({ fixture, form, injuries, teamName }) {
             </div>
           </div>
         </div>
+      ) : (
+        <EmptyState icon="📅" message="No upcoming games scheduled" />
       )}
 
       {/* Quick Stats Row */}
@@ -228,37 +271,45 @@ function OverviewTab({ fixture, form, injuries, teamName }) {
         {/* Form */}
         <div className="rounded-xl bg-ink border border-border p-3 text-center">
           <div className="text-xs text-text-muted mb-1">Form</div>
-          <div className="flex justify-center gap-1">
-            {formString.split("").map((r, i) => (
-              <span
-                key={i}
-                className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center ${
-                  r === "W" ? "bg-success/20 text-success" :
-                  r === "D" ? "bg-warning/20 text-warning" :
-                  "bg-danger/20 text-danger"
-                }`}
-              >
-                {r}
-              </span>
-            ))}
-          </div>
+          {formString ? (
+            <div className="flex justify-center gap-1">
+              {formString.split("").map((r, i) => (
+                <span
+                  key={i}
+                  className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center ${
+                    r === "W" ? "bg-success/20 text-success" :
+                    r === "D" ? "bg-warning/20 text-warning" :
+                    "bg-danger/20 text-danger"
+                  }`}
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-text-muted text-xs">No data</div>
+          )}
         </div>
 
         {/* Injuries */}
         <div className="rounded-xl bg-ink border border-border p-3 text-center">
           <div className="text-xs text-text-muted mb-1">Injuries</div>
-          <div className="text-xl font-bold text-danger">{injuries.length}</div>
+          <div className={`text-xl font-bold ${injuries.length > 0 ? "text-danger" : "text-success"}`}>
+            {injuries.length > 0 ? injuries.length : "✓"}
+          </div>
         </div>
 
         {/* Last Result */}
-        {form[0] && (
-          <div className="rounded-xl bg-ink border border-border p-3 text-center">
-            <div className="text-xs text-text-muted mb-1">Last Result</div>
+        <div className="rounded-xl bg-ink border border-border p-3 text-center">
+          <div className="text-xs text-text-muted mb-1">Last Result</div>
+          {form[0] ? (
             <div className="text-sm font-semibold">
               {form[0].homeGoals} - {form[0].awayGoals}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="text-text-muted text-xs">No data</div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -266,6 +317,10 @@ function OverviewTab({ fixture, form, injuries, teamName }) {
 
 // Form Tab
 function FormTab({ form, teamName }) {
+  if (!form || form.length === 0) {
+    return <EmptyState icon="📈" message="No recent results available" />;
+  }
+
   return (
     <div className="rounded-xl bg-ink border border-border overflow-hidden">
       <table className="w-full text-sm">
@@ -476,7 +531,7 @@ function InjuriesTab({ injuries }) {
 // Standings Tab
 function StandingsTab({ standings, teamName }) {
   if (!standings || standings.length === 0) {
-    return <LoadingSpinner />;
+    return <EmptyState icon="🏆" message="Standings unavailable" />;
   }
 
   return (

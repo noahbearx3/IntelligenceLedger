@@ -229,53 +229,105 @@ async function getTeamData(teamName) {
   const events = data.events || [];
   const now = new Date();
 
-  // Find next fixture (first future event)
+  // Helper to extract score (handles both string and object formats)
+  const getScore = (competitor) => {
+    if (!competitor?.score) return 0;
+    // ESPN returns score as object: { value: 109, displayValue: "109" }
+    if (typeof competitor.score === 'object') {
+      return parseInt(competitor.score.displayValue || competitor.score.value) || 0;
+    }
+    return parseInt(competitor.score) || 0;
+  };
+
+  // Helper to get team display name
+  const getTeamName = (competitor) => {
+    if (!competitor?.team) return "Unknown";
+    if (typeof competitor.team === 'object') {
+      return competitor.team.displayName || competitor.team.name || "Unknown";
+    }
+    return String(competitor.team);
+  };
+
+  // Helper to get team logo
+  const getTeamLogo = (competitor) => {
+    if (!competitor?.team?.logos) return null;
+    const logos = competitor.team.logos;
+    if (Array.isArray(logos) && logos.length > 0) {
+      return logos[0]?.href || null;
+    }
+    return null;
+  };
+
+  // Find next fixture (first future event that's not completed)
   let nextFixture = null;
-  const futureEvents = events.filter(e => new Date(e.date) > now);
+  const futureEvents = events.filter(e => {
+    const eventDate = new Date(e.date);
+    const isCompleted = e.competitions?.[0]?.status?.type?.completed;
+    return eventDate > now || !isCompleted;
+  });
+  
   if (futureEvents.length > 0) {
     const event = futureEvents[0];
     const competition = event.competitions?.[0];
     const homeTeam = competition?.competitors?.find(c => c.homeAway === "home");
     const awayTeam = competition?.competitors?.find(c => c.homeAway === "away");
+    const broadcast = competition?.broadcasts?.[0];
     
     nextFixture = {
       id: event.id,
-      home: homeTeam?.team?.displayName || "Home",
-      away: awayTeam?.team?.displayName || "Away",
+      name: event.name || event.shortName,
+      home: getTeamName(homeTeam),
+      homeLogo: getTeamLogo(homeTeam),
+      away: getTeamName(awayTeam),
+      awayLogo: getTeamLogo(awayTeam),
       date: event.date,
       venue: competition?.venue?.fullName || "TBD",
-      broadcast: event.competitions?.[0]?.broadcasts?.[0]?.names?.[0] || "",
+      broadcast: broadcast?.media?.shortName || "",
+      status: competition?.status?.type?.description || "Scheduled",
     };
   }
 
-  // Get recent results (past events with scores)
-  const pastEvents = events.filter(e => new Date(e.date) < now && e.competitions?.[0]?.status?.type?.completed);
+  // Get recent results (completed events)
+  const pastEvents = events.filter(e => e.competitions?.[0]?.status?.type?.completed === true);
+  
+  // Sort by date descending to get most recent first
+  pastEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
   const form = pastEvents.slice(0, 5).map(event => {
     const competition = event.competitions?.[0];
     const homeTeam = competition?.competitors?.find(c => c.homeAway === "home");
     const awayTeam = competition?.competitors?.find(c => c.homeAway === "away");
-    const homeScore = parseInt(homeTeam?.score) || 0;
-    const awayScore = parseInt(awayTeam?.score) || 0;
+    const homeScore = getScore(homeTeam);
+    const awayScore = getScore(awayTeam);
+    const homeName = getTeamName(homeTeam);
+    const awayName = getTeamName(awayTeam);
     
     // Determine result for the selected team
-    const isHome = homeTeam?.team?.displayName === teamName;
+    // Check if selected team is home or away
+    const isHome = homeName === teamName || homeTeam?.team?.id === String(teamInfo.id);
+    const teamScore = isHome ? homeScore : awayScore;
+    const oppScore = isHome ? awayScore : homeScore;
+    
     let result;
-    if (homeScore === awayScore) result = "D";
-    else if (isHome) result = homeScore > awayScore ? "W" : "L";
-    else result = awayScore > homeScore ? "W" : "L";
+    if (teamScore === oppScore) result = "D";
+    else if (teamScore > oppScore) result = "W";
+    else result = "L";
 
     return {
       id: event.id,
-      home: homeTeam?.team?.displayName || "Home",
-      away: awayTeam?.team?.displayName || "Away",
+      home: homeName,
+      homeLogo: getTeamLogo(homeTeam),
+      away: awayName,
+      awayLogo: getTeamLogo(awayTeam),
       homeGoals: homeScore,
       awayGoals: awayScore,
       date: event.date,
       result,
+      status: competition?.status?.type?.shortDetail || "Final",
     };
   });
 
-  return { nextFixture, form, league: teamInfo.league };
+  return { nextFixture, form, league: teamInfo.league, teamId: teamInfo.id };
 }
 
 /**
