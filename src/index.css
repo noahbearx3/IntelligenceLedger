@@ -5,20 +5,112 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Custom Properties for easy theming */
+/* ============================================
+   THEME SYSTEM - CSS Custom Properties
+   ============================================ */
+
+/* Dark Mode (Default) */
 :root {
-  --color-ink: #0A0A0B;
-  --color-surface: #141416;
-  --color-accent: #F5A623;
-  --color-text: #FAFAFA;
-  --color-text-muted: #636366;
+  color-scheme: dark;
+  
+  /* Backgrounds */
+  --bg-primary: #0A0A0B;
+  --bg-secondary: #111113;
+  --bg-elevated: #18181B;
+  --bg-surface: #141416;
+  
+  /* Text */
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  
+  /* Borders */
+  --border: #27272A;
+  --border-subtle: #1F1F23;
+  
+  /* Accent */
+  --accent: #FBBF24;
+  --accent-hover: #FCD34D;
+  --accent-muted: rgba(251, 191, 36, 0.15);
+  
+  /* Semantic */
+  --success: #34D399;
+  --success-muted: rgba(52, 211, 153, 0.15);
+  --danger: #F87171;
+  --danger-muted: rgba(248, 113, 113, 0.15);
+  --warning: #FBBF24;
+  --warning-muted: rgba(251, 191, 36, 0.15);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(251, 191, 36, 0.15);
+  --shadow-glow-sm: 0 0 10px rgba(251, 191, 36, 0.1);
+  
+  /* Glass */
+  --glass-bg: rgba(17, 17, 19, 0.8);
 }
 
-/* Base styles */
+/* Light Mode */
+.light {
+  color-scheme: light;
+  
+  /* Backgrounds */
+  --bg-primary: #FAFAFA;
+  --bg-secondary: #F4F4F5;
+  --bg-elevated: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  
+  /* Text */
+  --text-primary: #18181B;
+  --text-secondary: #52525B;
+  --text-muted: #A1A1AA;
+  
+  /* Borders */
+  --border: #E4E4E7;
+  --border-subtle: #F4F4F5;
+  
+  /* Accent - slightly darker for light mode contrast */
+  --accent: #D97706;
+  --accent-hover: #B45309;
+  --accent-muted: rgba(217, 119, 6, 0.1);
+  
+  /* Semantic - adjusted for light mode */
+  --success: #059669;
+  --success-muted: rgba(5, 150, 105, 0.1);
+  --danger: #DC2626;
+  --danger-muted: rgba(220, 38, 38, 0.1);
+  --warning: #D97706;
+  --warning-muted: rgba(217, 119, 6, 0.1);
+  
+  /* Shadows - softer for light mode */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(217, 119, 6, 0.1);
+  --shadow-glow-sm: 0 0 10px rgba(217, 119, 6, 0.08);
+  
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  @apply bg-ink text-text-primary antialiased;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   font-feature-settings: "ss01" on, "ss02" on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Typography utilities */
@@ -31,14 +123,10 @@ body {
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
 /* Focus styles for accessibility */
 *:focus-visible {
-  @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-ink;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent);
 }
 
 /* Custom scrollbar */
@@ -48,25 +136,55 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-full;
+  background: var(--border);
+  border-radius: 999px;
   transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-text-muted;
+  background: var(--text-muted);
+}
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* Selection color */
 ::selection {
-  @apply bg-accent/30 text-text-primary;
+  background: var(--accent-muted);
+  color: var(--text-primary);
 }
 
 /* ============================================
-   MICRO-INTERACTIONS & COMPONENT STYLES
+   THEME TRANSITION
+   ============================================ */
+
+/* Smooth transitions for theme changes */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-timing-function: ease;
+  transition-duration: 0s;
+}
+
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition-duration: 0.2s !important;
+}
+
+/* ============================================
+   COMPONENT STYLES
    ============================================ */
 
 @layer components {
@@ -78,57 +196,121 @@ html {
   }
   
   .btn-primary {
-    @apply bg-accent text-ink;
-    @apply hover:bg-accent-hover hover:shadow-glow-sm;
+    background-color: var(--accent);
+    color: var(--bg-primary);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--accent-hover);
+    box-shadow: var(--shadow-glow-sm);
   }
   
   .btn-secondary {
-    @apply bg-surface-elevated text-text-primary border border-border;
-    @apply hover:border-accent/40 hover:bg-surface;
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    background-color: var(--bg-surface);
   }
   
   .btn-ghost {
-    @apply text-text-secondary;
-    @apply hover:text-text-primary hover:bg-surface-elevated;
+    color: var(--text-secondary);
+  }
+  
+  .btn-ghost:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-elevated);
   }
 
-  /* Card styles with hover effects */
+  /* Card styles */
   .card {
-    @apply rounded-xl bg-surface border border-border;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    @apply rounded-xl;
     @apply transition-all duration-200 ease-out;
   }
   
   .card-interactive {
     @apply card cursor-pointer;
-    @apply hover:border-accent/30 hover:shadow-glow-sm;
-    @apply active:scale-[0.99];
+  }
+  
+  .card-interactive:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-glow-sm);
+  }
+  
+  .card-interactive:active {
+    @apply scale-[0.99];
   }
   
   .card-selected {
-    @apply ring-2 ring-accent shadow-glow-sm;
+    box-shadow: 0 0 0 2px var(--accent), var(--shadow-glow-sm);
   }
 
   /* Input styles */
   .input {
-    @apply w-full rounded-lg border border-border bg-ink px-3 py-2 text-sm;
-    @apply text-text-primary placeholder:text-text-muted;
+    @apply w-full rounded-lg px-3 py-2 text-sm;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
     @apply transition-all duration-150 ease-out;
-    @apply focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30;
+  }
+  
+  .input::placeholder {
+    color: var(--text-muted);
+  }
+  
+  .input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-muted);
   }
   
   /* Tab/Toggle styles */
   .tab-group {
-    @apply flex gap-1 rounded-lg bg-ink p-1;
+    @apply flex gap-1 rounded-lg p-1;
+    background-color: var(--bg-primary);
   }
   
   .tab {
     @apply rounded-md px-4 py-1.5 text-sm font-medium;
     @apply transition-all duration-150 ease-out;
-    @apply text-text-muted hover:text-text-primary;
+    color: var(--text-muted);
+  }
+  
+  .tab:hover {
+    color: var(--text-primary);
   }
   
   .tab-active {
-    @apply bg-accent text-ink shadow-sm;
+    background-color: var(--accent);
+    color: var(--bg-primary);
+    @apply shadow-sm;
+  }
+  
+  /* Theme toggle button */
+  .theme-toggle {
+    @apply relative flex items-center justify-center w-9 h-9 rounded-lg;
+    @apply transition-all duration-200 ease-out;
+    color: var(--text-muted);
+    background-color: transparent;
+  }
+  
+  .theme-toggle:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-elevated);
+  }
+  
+  .theme-toggle svg {
+    @apply w-5 h-5;
+    @apply transition-transform duration-300 ease-out;
+  }
+  
+  .theme-toggle:hover svg {
+    @apply scale-110;
   }
 }
 
@@ -143,11 +325,11 @@ html {
   
   /* Glow effects */
   .glow {
-    box-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
+    box-shadow: var(--shadow-glow);
   }
   
   .glow-sm {
-    box-shadow: 0 0 10px rgba(245, 166, 35, 0.15);
+    box-shadow: var(--shadow-glow-sm);
   }
 
   /* Smooth transitions */
@@ -232,7 +414,20 @@ html {
 
   /* Skeleton loading */
   .skeleton {
-    @apply bg-surface animate-pulse rounded;
+    background: linear-gradient(
+      90deg,
+      var(--bg-surface) 25%,
+      var(--bg-elevated) 50%,
+      var(--bg-surface) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    @apply rounded;
+  }
+  
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 
   /* Number counter effect (for stats) */
@@ -247,25 +442,33 @@ html {
 
 /* Gradient text for special headings */
 .text-gradient {
-  background: linear-gradient(135deg, var(--color-accent) 0%, #FFD700 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, #FFD700 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Subtle noise texture overlay (optional) */
-.noise-overlay::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 1;
-}
-
 /* Glass effect for modals/overlays */
 .glass {
-  background: rgba(20, 20, 22, 0.8);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
 }

@@ -5,6 +5,7 @@ import { TEAMS_BY_LEAGUE, FEATURED_TEAMS, ALL_TEAMS, findTeam, getLeagueForTeam,
 import { PLAYERS_BY_LEAGUE, FEATURED_PLAYERS, ALL_PLAYERS, findPlayer, getLeagueForPlayer, getHeadshotUrl, FALLBACK_HEADSHOT, POSITION_COLORS } from "./data/players";
 import { ANALYSTS, getAnalystById, getTopAnalysts, formatStreak, formatWinRate, formatROI, formatFollowers, SPECIALTY_COLORS, COMMENTS, REACTIONS, REACTION_TYPES, getCommentsForPick, getReactionsForPick } from "./data/analysts";
 import MatchIntelSection from "./components/MatchIntelSection";
+import { useTheme, ThemeToggle } from "./hooks/useTheme";
 
 const rssItems = [
   {
@@ -223,6 +224,9 @@ const Modal = ({ open, onClose, children, tone = "default" }) => {
 };
 
 export default function App() {
+  // Theme
+  const { theme, toggleTheme, isDark } = useTheme();
+  
   const [activeTab, setActiveTab] = useState("team");
   const [selectedLeague, setSelectedLeague] = useState("NFL");
   const [teamSearch, setTeamSearch] = useState("");
@@ -753,8 +757,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-ink text-slate-200">
-      <header className="sticky top-0 z-20 border-b border-border/50 bg-ink/90 backdrop-blur-xl">
+    <div className="min-h-screen bg-ink text-text-primary">
+      <header className="sticky top-0 z-20 border-b border-border/50 glass">
         <div className="mx-auto flex max-w-8xl items-center justify-between gap-4 px-6 py-3 md:px-8">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group">
@@ -764,7 +768,10 @@ export default function App() {
           </a>
 
           {/* Nav */}
-          <nav className="flex items-center gap-3">
+          <nav className="flex items-center gap-2">
+            {/* Theme Toggle */}
+            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+            
             {isLoggedIn ? (
               <>
                 {/* Notifications */}

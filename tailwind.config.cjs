@@ -1,38 +1,41 @@
 module.exports = {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Core backgrounds
-        ink: "#0A0A0B",
-        surface: "#141416",
-        "surface-elevated": "#1C1C1F",
+        // Core backgrounds - using CSS variables
+        ink: "var(--bg-primary)",
+        surface: "var(--bg-surface)",
+        "surface-elevated": "var(--bg-elevated)",
+        "bg-secondary": "var(--bg-secondary)",
         
         // Borders
-        border: "#2A2A2E",
-        "border-subtle": "#1F1F23",
+        border: "var(--border)",
+        "border-subtle": "var(--border-subtle)",
         
         // Text hierarchy
-        "text-primary": "#FAFAFA",
-        "text-secondary": "#A1A1A6",
-        "text-muted": "#636366",
+        "text-primary": "var(--text-primary)",
+        "text-secondary": "var(--text-secondary)",
+        "text-muted": "var(--text-muted)",
         
-        // Brand accent - Gold
-        accent: "#F5A623",
-        "accent-hover": "#FFBA42",
-        "accent-muted": "rgba(245, 166, 35, 0.15)",
+        // Brand accent
+        accent: "var(--accent)",
+        "accent-hover": "var(--accent-hover)",
+        "accent-muted": "var(--accent-muted)",
         
         // Semantic colors
-        success: "#34C759",
-        "success-muted": "rgba(52, 199, 89, 0.15)",
-        danger: "#FF3B30",
-        "danger-muted": "rgba(255, 59, 48, 0.15)",
-        warning: "#FF9500",
+        success: "var(--success)",
+        "success-muted": "var(--success-muted)",
+        danger: "var(--danger)",
+        "danger-muted": "var(--danger-muted)",
+        warning: "var(--warning)",
+        "warning-muted": "var(--warning-muted)",
         
-        // Legacy support (gradual migration)
-        panel: "#141416",
-        card: "#1C1C1F",
-        muted: "#636366",
+        // Legacy support
+        panel: "var(--bg-surface)",
+        card: "var(--bg-elevated)",
+        muted: "var(--text-muted)",
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
@@ -55,8 +58,9 @@ module.exports = {
         '8xl': '88rem',
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(245, 166, 35, 0.15)',
-        'glow-sm': '0 0 10px rgba(245, 166, 35, 0.1)',
+        'glow': 'var(--shadow-glow)',
+        'glow-sm': 'var(--shadow-glow-sm)',
+        'soft': 'var(--shadow-md)',
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-out',
