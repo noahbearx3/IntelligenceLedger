@@ -191,39 +191,6 @@ export const MLS_TEAMS = [
   { name: "Austin FC", abbr: "6461", primary: "#00B140", secondary: "#000000" },
 ];
 
-// College Football Teams (CFB)
-export const CFB_TEAMS = [
-  { name: "Alabama Crimson Tide", abbr: "ala", primary: "#9E1B32", secondary: "#828A8F" },
-  { name: "Georgia Bulldogs", abbr: "geo", primary: "#BA0C2F", secondary: "#000000" },
-  { name: "Michigan Wolverines", abbr: "mich", primary: "#00274C", secondary: "#FFCB05" },
-  { name: "Ohio State Buckeyes", abbr: "osu", primary: "#BB0000", secondary: "#666666" },
-  { name: "Texas Longhorns", abbr: "tex", primary: "#BF5700", secondary: "#333F48" },
-  { name: "USC Trojans", abbr: "usc", primary: "#990000", secondary: "#FFC72C" },
-  { name: "Oregon Ducks", abbr: "ore", primary: "#154733", secondary: "#FEE123" },
-  { name: "Penn State Nittany Lions", abbr: "psu", primary: "#041E42", secondary: "#FFFFFF" },
-  { name: "Florida State Seminoles", abbr: "fsu", primary: "#782F40", secondary: "#CEB888" },
-  { name: "Clemson Tigers", abbr: "clem", primary: "#F56600", secondary: "#522D80" },
-  { name: "LSU Tigers", abbr: "lsu", primary: "#461D7C", secondary: "#FDD023" },
-  { name: "Notre Dame Fighting Irish", abbr: "nd", primary: "#0C2340", secondary: "#C99700" },
-  { name: "Tennessee Volunteers", abbr: "tenn", primary: "#FF8200", secondary: "#58595B" },
-  { name: "Oklahoma Sooners", abbr: "okla", primary: "#841617", secondary: "#FDF9D8" },
-  { name: "Miami Hurricanes", abbr: "mia", primary: "#F47321", secondary: "#005030" },
-];
-
-// College Basketball Teams (CBB)
-export const CBB_TEAMS = [
-  { name: "Duke Blue Devils", abbr: "duke", primary: "#003087", secondary: "#FFFFFF" },
-  { name: "North Carolina Tar Heels", abbr: "unc", primary: "#7BAFD4", secondary: "#13294B" },
-  { name: "Kansas Jayhawks", abbr: "kan", primary: "#0051BA", secondary: "#E8000D" },
-  { name: "Kentucky Wildcats", abbr: "uk", primary: "#0033A0", secondary: "#FFFFFF" },
-  { name: "UCLA Bruins", abbr: "ucla", primary: "#2D68C4", secondary: "#F2A900" },
-  { name: "Gonzaga Bulldogs", abbr: "gonz", primary: "#002967", secondary: "#C8102E" },
-  { name: "UConn Huskies", abbr: "uconn", primary: "#0E1A3E", secondary: "#E4002B" },
-  { name: "Purdue Boilermakers", abbr: "pur", primary: "#CEB888", secondary: "#000000" },
-  { name: "Arizona Wildcats", abbr: "ariz", primary: "#CC0033", secondary: "#003366" },
-  { name: "Houston Cougars", abbr: "hou", primary: "#C8102E", secondary: "#888B8D" },
-];
-
 // Get logo URL for a team
 export function getLogoUrl(abbr, league) {
   const leagueLower = league.toLowerCase().replace(" ", "");
@@ -232,14 +199,6 @@ export function getLogoUrl(abbr, league) {
   const soccerLeagues = ["epl", "laliga", "mls"];
   if (soccerLeagues.includes(leagueLower)) {
     return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/${abbr}.png&h=100&w=100`;
-  }
-  
-  // College sports use different paths
-  if (leagueLower === "ncaaf") {
-    return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/${abbr}.png&h=100&w=100`;
-  }
-  if (leagueLower === "ncaab") {
-    return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/${abbr}.png&h=100&w=100`;
   }
   
   // American sports use abbreviations
@@ -255,32 +214,18 @@ export const TEAMS_BY_LEAGUE = {
   EPL: EPL_TEAMS,
   "La Liga": LALIGA_TEAMS,
   MLS: MLS_TEAMS,
-  NCAAF: CFB_TEAMS,
-  NCAAB: CBB_TEAMS,
 };
 
 // Flatten all teams
-export const ALL_TEAMS = [
-  ...NFL_TEAMS, 
-  ...NBA_TEAMS, 
-  ...NHL_TEAMS, 
-  ...MLB_TEAMS, 
-  ...EPL_TEAMS, 
-  ...LALIGA_TEAMS, 
-  ...MLS_TEAMS,
-  ...CFB_TEAMS,
-  ...CBB_TEAMS,
-];
+export const ALL_TEAMS = [...NFL_TEAMS, ...NBA_TEAMS, ...NHL_TEAMS, ...MLB_TEAMS, ...EPL_TEAMS, ...LALIGA_TEAMS, ...MLS_TEAMS];
 
 // Featured teams
 export const FEATURED_TEAMS = [
   { ...NFL_TEAMS.find(t => t.name === "Buffalo Bills"), league: "NFL", trending: "🔥 Hot" },
   { ...NFL_TEAMS.find(t => t.name === "Kansas City Chiefs"), league: "NFL", trending: "📈 Playoff bound" },
   { ...NBA_TEAMS.find(t => t.name === "Boston Celtics"), league: "NBA", trending: "🏆 Title favorites" },
-  { ...NHL_TEAMS.find(t => t.name === "Florida Panthers"), league: "NHL", trending: "🏒 Cup favorites" },
-  { ...MLB_TEAMS.find(t => t.name === "Los Angeles Dodgers"), league: "MLB", trending: "⚾ Defending champs" },
   { ...EPL_TEAMS.find(t => t.name === "Liverpool"), league: "EPL", trending: "⚽ Top of table" },
-  { ...CFB_TEAMS.find(t => t.name === "Ohio State Buckeyes"), league: "NCAAF", trending: "🏈 National contender" },
+  { ...EPL_TEAMS.find(t => t.name === "Arsenal"), league: "EPL", trending: "🎯 Title race" },
 ];
 
 // Find team by name
