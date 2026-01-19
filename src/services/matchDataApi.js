@@ -263,7 +263,7 @@ export async function getTeamForm(teamName) {
 }
 
 /**
- * Get lineup for a fixture
+ * Get lineup for a fixture (mock - ESPN doesn't provide this)
  */
 export async function getLineup(fixtureId) {
   return getMockLineup();
@@ -273,14 +273,83 @@ export async function getLineup(fixtureId) {
  * Get head-to-head history
  */
 export async function getH2H(team1Name, team2Name) {
-  return getMockH2H(team1Name, team2Name);
+  if (!TEAM_IDS[team1Name] || !TEAM_IDS[team2Name]) {
+    console.log(`⚠️ Unknown team for H2H: ${team1Name} or ${team2Name}`);
+    return { matches: [], stats: { wins: 0, draws: 0, losses: 0, total: 0 } };
+  }
+
+  const data = await callApi("h2h", { teamName: team1Name, team2Name });
+  
+  if (!data || !data.matches) {
+    console.log(`ℹ️ No H2H data for ${team1Name} vs ${team2Name}`);
+    return { matches: [], stats: { wins: 0, draws: 0, losses: 0, total: 0 } };
+  }
+
+  return data;
 }
 
 /**
  * Get team injuries
  */
 export async function getInjuries(teamName) {
-  return [];
+  if (!TEAM_IDS[teamName]) {
+    console.log(`⚠️ Unknown team: ${teamName}`);
+    return [];
+  }
+
+  const data = await callApi("injuries", { teamName });
+  
+  if (!data || !Array.isArray(data)) {
+    console.log(`ℹ️ No injuries for ${teamName}`);
+    return [];
+  }
+
+  return data.map((injury, i) => ({
+    id: i,
+    player: injury.player || "Unknown",
+    position: injury.position || "",
+    type: injury.status || "Out",
+    reason: injury.injury || "Undisclosed",
+    returnDate: injury.returnDate || null,
+  }));
+}
+
+/**
+ * Get team roster
+ */
+export async function getRoster(teamName) {
+  if (!TEAM_IDS[teamName]) {
+    console.log(`⚠️ Unknown team: ${teamName}`);
+    return [];
+  }
+
+  const data = await callApi("roster", { teamName });
+  
+  if (!data || !Array.isArray(data)) {
+    console.log(`ℹ️ No roster for ${teamName}`);
+    return [];
+  }
+
+  return data;
+}
+
+/**
+ * Get live scoreboard for a league
+ */
+export async function getScoreboard(league) {
+  if (!LEAGUE_IDS[league]) {
+    console.log(`⚠️ Unknown league: ${league}`);
+    return [];
+  }
+
+  const data = await callApi("scoreboard", { league });
+  
+  if (!data || !Array.isArray(data) || data.error) {
+    console.log(`ℹ️ No scoreboard data for ${league}`);
+    return [];
+  }
+
+  return data;
 }
 
 /**

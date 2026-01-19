@@ -154,7 +154,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { type, teamName, league } = req.body;
+  const { type, teamName, league, team2Name } = req.body;
 
   try {
     let data;
@@ -174,6 +174,15 @@ export default async function handler(req, res) {
         break;
       case "scoreboard":
         data = await getScoreboard(league);
+        break;
+      case "injuries":
+        data = await getInjuries(teamName);
+        break;
+      case "roster":
+        data = await getRoster(teamName);
+        break;
+      case "h2h":
+        data = await getH2H(teamName, team2Name);
         break;
       default:
         return res.status(400).json({ error: "Invalid type" });
@@ -462,24 +471,205 @@ async function getScoreboard(league) {
     const competition = event.competitions?.[0];
     const homeTeam = competition?.competitors?.find(c => c.homeAway === "home");
     const awayTeam = competition?.competitors?.find(c => c.homeAway === "away");
+    const status = competition?.status;
     
     return {
       id: event.id,
       name: event.name,
+      shortName: event.shortName,
       date: event.date,
-      status: competition?.status?.type?.description || "Scheduled",
+      status: status?.type?.description || "Scheduled",
+      statusDetail: status?.type?.shortDetail || "",
+      period: status?.period || 0,
+      clock: status?.displayClock || "",
+      isLive: status?.type?.state === "in",
+      isComplete: status?.type?.completed || false,
       home: {
         name: homeTeam?.team?.displayName || "Home",
-        logo: homeTeam?.team?.logo || null,
+        abbreviation: homeTeam?.team?.abbreviation || "",
+        logo: homeTeam?.team?.logo || homeTeam?.team?.logos?.[0]?.href || null,
         score: homeTeam?.score || "0",
+        record: homeTeam?.records?.[0]?.summary || "",
       },
       away: {
         name: awayTeam?.team?.displayName || "Away",
-        logo: awayTeam?.team?.logo || null,
+        abbreviation: awayTeam?.team?.abbreviation || "",
+        logo: awayTeam?.team?.logo || awayTeam?.team?.logos?.[0]?.href || null,
         score: awayTeam?.score || "0",
+        record: awayTeam?.records?.[0]?.summary || "",
       },
       venue: competition?.venue?.fullName || "TBD",
-      broadcast: competition?.broadcasts?.[0]?.names?.[0] || "",
+      broadcast: competition?.broadcasts?.[0]?.names?.[0] || competition?.geoBroadcasts?.[0]?.media?.shortName || "",
     };
   });
+}
+
+/**
+ * Get team injuries
+ */
+async function getInjuries(teamName) {
+  const teamInfo = ESPN_TEAM_IDS[teamName];
+  if (!teamInfo) {
+    return [];
+  }
+
+  const leagueInfo = ESPN_LEAGUES[teamInfo.league];
+  if (!leagueInfo) {
+    return [];
+  }
+
+  // ESPN injuries endpoint
+  const url = `${ESPN_BASE}/${leagueInfo.sport}/${leagueInfo.league}/teams/${teamInfo.id}/injuries`;
+  
+  try {
+    const data = await fetchESPN(url);
+    const items = data.items || data.injuries || [];
+    
+    return items.map(injury => ({
+      player: injury.athlete?.displayName || injury.athlete?.fullName || "Unknown",
+      position: injury.athlete?.position?.abbreviation || "",
+      status: injury.status || injury.type?.description || "Out",
+      injury: injury.details?.type || injury.longComment || injury.shortComment || "Undisclosed",
+      returnDate: injury.details?.returnDate || null,
+    })).slice(0, 15);
+  } catch (error) {
+    console.log(`ℹ️ No injuries data for ${teamName}:`, error.message);
+    return [];
+  }
+}
+
+/**
+ * Get team roster
+ */
+async function getRoster(teamName) {
+  const teamInfo = ESPN_TEAM_IDS[teamName];
+  if (!teamInfo) {
+    return [];
+  }
+
+  const leagueInfo = ESPN_LEAGUES[teamInfo.league];
+  if (!leagueInfo) {
+    return [];
+  }
+
+  const url = `${ESPN_BASE}/${leagueInfo.sport}/${leagueInfo.league}/teams/${teamInfo.id}/roster`;
+  
+  try {
+    const data = await fetchESPN(url);
+    const athletes = data.athletes || [];
+    
+    // Group by position
+    const roster = [];
+    
+    for (const group of athletes) {
+      const position = group.position || "Players";
+      const items = group.items || [];
+      
+      for (const player of items) {
+        roster.push({
+          id: player.id,
+          name: player.displayName || player.fullName,
+          firstName: player.firstName,
+          lastName: player.lastName,
+          jersey: player.jersey || "",
+          position: player.position?.abbreviation || position,
+          positionName: player.position?.name || position,
+          age: player.age,
+          height: player.displayHeight || "",
+          weight: player.displayWeight || "",
+          headshot: player.headshot?.href || null,
+          status: player.status?.type || "Active",
+        });
+      }
+    }
+    
+    return roster;
+  } catch (error) {
+    console.log(`ℹ️ No roster data for ${teamName}:`, error.message);
+    return [];
+  }
+}
+
+/**
+ * Get head-to-head history between two teams
+ */
+async function getH2H(team1Name, team2Name) {
+  const team1Info = ESPN_TEAM_IDS[team1Name];
+  const team2Info = ESPN_TEAM_IDS[team2Name];
+  
+  if (!team1Info || !team2Info) {
+    return { matches: [], stats: { wins: 0, draws: 0, losses: 0, total: 0 } };
+  }
+
+  // ESPN doesn't have a direct H2H endpoint, so we search team1's schedule for team2
+  const leagueInfo = ESPN_LEAGUES[team1Info.league];
+  if (!leagueInfo) {
+    return { matches: [], stats: { wins: 0, draws: 0, losses: 0, total: 0 } };
+  }
+
+  const url = `${ESPN_BASE}/${leagueInfo.sport}/${leagueInfo.league}/teams/${team1Info.id}/schedule?season=2024`;
+  
+  try {
+    const data = await fetchESPN(url);
+    const events = data.events || [];
+    
+    // Filter for matches against team2
+    const h2hMatches = events.filter(event => {
+      const competition = event.competitions?.[0];
+      const competitors = competition?.competitors || [];
+      return competitors.some(c => 
+        c.team?.id === String(team2Info.id) ||
+        c.team?.displayName === team2Name
+      );
+    });
+
+    // Parse matches
+    let wins = 0, draws = 0, losses = 0;
+    
+    const matches = h2hMatches.slice(0, 10).map(event => {
+      const competition = event.competitions?.[0];
+      const homeTeam = competition?.competitors?.find(c => c.homeAway === "home");
+      const awayTeam = competition?.competitors?.find(c => c.homeAway === "away");
+      
+      const getScore = (competitor) => {
+        if (!competitor?.score) return 0;
+        if (typeof competitor.score === 'object') {
+          return parseInt(competitor.score.displayValue || competitor.score.value) || 0;
+        }
+        return parseInt(competitor.score) || 0;
+      };
+
+      const homeScore = getScore(homeTeam);
+      const awayScore = getScore(awayTeam);
+      const homeName = homeTeam?.team?.displayName || "Home";
+      const awayName = awayTeam?.team?.displayName || "Away";
+      
+      // Determine result for team1
+      const isTeam1Home = homeName === team1Name || homeTeam?.team?.id === String(team1Info.id);
+      const team1Score = isTeam1Home ? homeScore : awayScore;
+      const team2Score = isTeam1Home ? awayScore : homeScore;
+      
+      if (team1Score > team2Score) wins++;
+      else if (team1Score < team2Score) losses++;
+      else draws++;
+
+      return {
+        id: event.id,
+        date: event.date,
+        home: homeName,
+        away: awayName,
+        homeGoals: homeScore,
+        awayGoals: awayScore,
+        venue: competition?.venue?.fullName || "TBD",
+      };
+    });
+
+    return {
+      matches,
+      stats: { wins, draws, losses, total: matches.length },
+    };
+  } catch (error) {
+    console.log(`ℹ️ No H2H data for ${team1Name} vs ${team2Name}:`, error.message);
+    return { matches: [], stats: { wins: 0, draws: 0, losses: 0, total: 0 } };
+  }
 }
