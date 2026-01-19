@@ -5,7 +5,7 @@ import { TEAMS_BY_LEAGUE, FEATURED_TEAMS, ALL_TEAMS, findTeam, getLeagueForTeam,
 import { PLAYERS_BY_LEAGUE, FEATURED_PLAYERS, ALL_PLAYERS, findPlayer, getLeagueForPlayer, getHeadshotUrl, FALLBACK_HEADSHOT, POSITION_COLORS } from "./data/players";
 import { ANALYSTS, getAnalystById, getTopAnalysts, formatStreak, formatWinRate, formatROI, formatFollowers, SPECIALTY_COLORS, COMMENTS, REACTIONS, REACTION_TYPES, getCommentsForPick, getReactionsForPick } from "./data/analysts";
 import MatchIntelSection from "./components/MatchIntelSection";
-import { useTheme, ThemeToggle } from "./hooks/useTheme";
+import { useTheme, ThemeToggle } from "./hooks/useTheme.jsx";
 
 const rssItems = [
   {
