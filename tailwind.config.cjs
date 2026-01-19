@@ -4,33 +4,48 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Core backgrounds - using CSS variables
+        // Core backgrounds
         ink: "var(--bg-primary)",
         surface: "var(--bg-surface)",
         "surface-elevated": "var(--bg-elevated)",
+        "bg-primary": "var(--bg-primary)",
         "bg-secondary": "var(--bg-secondary)",
+        "bg-elevated": "var(--bg-elevated)",
+        "bg-hover": "var(--bg-hover)",
         
         // Borders
         border: "var(--border)",
         "border-subtle": "var(--border-subtle)",
+        "border-strong": "var(--border-strong)",
         
         // Text hierarchy
         "text-primary": "var(--text-primary)",
         "text-secondary": "var(--text-secondary)",
         "text-muted": "var(--text-muted)",
+        "text-faint": "var(--text-faint)",
         
         // Brand accent
         accent: "var(--accent)",
         "accent-hover": "var(--accent-hover)",
+        "accent-active": "var(--accent-active)",
         "accent-muted": "var(--accent-muted)",
+        "accent-subtle": "var(--accent-subtle)",
         
         // Semantic colors
         success: "var(--success)",
+        "success-hover": "var(--success-hover)",
         "success-muted": "var(--success-muted)",
+        
         danger: "var(--danger)",
+        "danger-hover": "var(--danger-hover)",
         "danger-muted": "var(--danger-muted)",
+        
         warning: "var(--warning)",
+        "warning-hover": "var(--warning-hover)",
         "warning-muted": "var(--warning-muted)",
+        
+        info: "var(--info)",
+        "info-muted": "var(--info-muted)",
         
         // Legacy support
         panel: "var(--bg-surface)",

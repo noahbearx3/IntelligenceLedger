@@ -11,90 +11,134 @@
    THEME SYSTEM - CSS Custom Properties
    ============================================ */
 
-/* Dark Mode (Default) */
+/* ============================================
+   DARK MODE (Default) - Rich & Sophisticated
+   Inspired by Linear, Vercel, Raycast
+   ============================================ */
 :root {
   color-scheme: dark;
   
-  /* Backgrounds */
-  --bg-primary: #0A0A0B;
-  --bg-secondary: #111113;
-  --bg-elevated: #18181B;
-  --bg-surface: #141416;
+  /* Backgrounds - Rich darks, not pure black */
+  --bg-primary: #09090B;      /* Main background - almost black with warmth */
+  --bg-secondary: #0F0F12;    /* Slightly elevated */
+  --bg-elevated: #161618;     /* Cards, modals */
+  --bg-surface: #131315;      /* Panels, sidebars */
+  --bg-hover: #1C1C1F;        /* Hover states */
   
-  /* Text */
-  --text-primary: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
+  /* Text - Soft whites for reduced eye strain */
+  --text-primary: #F4F4F5;    /* Main text - not pure white */
+  --text-secondary: #A1A1AA;  /* Secondary content */
+  --text-muted: #63636B;      /* Labels, captions */
+  --text-faint: #3F3F46;      /* Disabled, placeholders */
   
-  /* Borders */
-  --border: #27272A;
-  --border-subtle: #1F1F23;
+  /* Borders - Subtle definition */
+  --border: #27272A;          /* Default borders */
+  --border-subtle: #1C1C1F;   /* Very subtle dividers */
+  --border-strong: #3F3F46;   /* Emphasized borders */
   
-  /* Accent */
-  --accent: #FBBF24;
-  --accent-hover: #FCD34D;
-  --accent-muted: rgba(251, 191, 36, 0.15);
+  /* Accent - Warm amber gold */
+  --accent: #F59E0B;          /* Primary accent */
+  --accent-hover: #FBBF24;    /* Hover state */
+  --accent-active: #D97706;   /* Active/pressed */
+  --accent-muted: rgba(245, 158, 11, 0.12);
+  --accent-subtle: rgba(245, 158, 11, 0.06);
   
-  /* Semantic */
-  --success: #34D399;
-  --success-muted: rgba(52, 211, 153, 0.15);
-  --danger: #F87171;
-  --danger-muted: rgba(248, 113, 113, 0.15);
-  --warning: #FBBF24;
-  --warning-muted: rgba(251, 191, 36, 0.15);
+  /* Semantic - Vibrant but not harsh */
+  --success: #10B981;
+  --success-hover: #34D399;
+  --success-muted: rgba(16, 185, 129, 0.12);
   
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(251, 191, 36, 0.15);
-  --shadow-glow-sm: 0 0 10px rgba(251, 191, 36, 0.1);
+  --danger: #EF4444;
+  --danger-hover: #F87171;
+  --danger-muted: rgba(239, 68, 68, 0.12);
   
-  /* Glass */
-  --glass-bg: rgba(17, 17, 19, 0.8);
+  --warning: #F59E0B;
+  --warning-hover: #FBBF24;
+  --warning-muted: rgba(245, 158, 11, 0.12);
+  
+  --info: #3B82F6;
+  --info-muted: rgba(59, 130, 246, 0.12);
+  
+  /* Shadows - Deeper for dark mode */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 24px rgba(245, 158, 11, 0.15);
+  --shadow-glow-sm: 0 0 12px rgba(245, 158, 11, 0.1);
+  
+  /* Glass/Overlay */
+  --glass-bg: rgba(9, 9, 11, 0.85);
+  --overlay: rgba(0, 0, 0, 0.6);
+  
+  /* Focus ring */
+  --focus-ring: rgba(245, 158, 11, 0.5);
 }
 
-/* Light Mode */
+/* ============================================
+   LIGHT MODE - Clean & Warm
+   Inspired by Notion, Linear Light, Apple
+   ============================================ */
 .light {
   color-scheme: light;
   
-  /* Backgrounds */
-  --bg-primary: #FAFAFA;
-  --bg-secondary: #F4F4F5;
-  --bg-elevated: #FFFFFF;
-  --bg-surface: #FFFFFF;
+  /* Backgrounds - Warm off-whites */
+  --bg-primary: #FAFAF9;      /* Main background - warm white */
+  --bg-secondary: #F5F5F4;    /* Slightly darker */
+  --bg-elevated: #FFFFFF;     /* Cards - pure white */
+  --bg-surface: #FFFFFF;      /* Panels */
+  --bg-hover: #F0F0EE;        /* Hover states */
   
-  /* Text */
-  --text-primary: #18181B;
-  --text-secondary: #52525B;
-  --text-muted: #A1A1AA;
+  /* Text - Near blacks for readability */
+  --text-primary: #1C1C1C;    /* Main text - not pure black */
+  --text-secondary: #525252;  /* Secondary content */
+  --text-muted: #8C8C8C;      /* Labels, captions */
+  --text-faint: #B8B8B8;      /* Disabled, placeholders */
   
-  /* Borders */
-  --border: #E4E4E7;
-  --border-subtle: #F4F4F5;
+  /* Borders - Soft definition */
+  --border: #E5E5E3;          /* Default borders */
+  --border-subtle: #F0F0EE;   /* Very subtle dividers */
+  --border-strong: #D4D4D2;   /* Emphasized borders */
   
-  /* Accent - slightly darker for light mode contrast */
-  --accent: #D97706;
-  --accent-hover: #B45309;
+  /* Accent - Deeper amber for contrast */
+  --accent: #D97706;          /* Primary accent - darker for visibility */
+  --accent-hover: #B45309;    /* Hover - even darker */
+  --accent-active: #92400E;   /* Active/pressed */
   --accent-muted: rgba(217, 119, 6, 0.1);
+  --accent-subtle: rgba(217, 119, 6, 0.05);
   
-  /* Semantic - adjusted for light mode */
+  /* Semantic - Stronger for light backgrounds */
   --success: #059669;
+  --success-hover: #047857;
   --success-muted: rgba(5, 150, 105, 0.1);
+  
   --danger: #DC2626;
+  --danger-hover: #B91C1C;
   --danger-muted: rgba(220, 38, 38, 0.1);
+  
   --warning: #D97706;
+  --warning-hover: #B45309;
   --warning-muted: rgba(217, 119, 6, 0.1);
   
-  /* Shadows - softer for light mode */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 20px rgba(217, 119, 6, 0.1);
-  --shadow-glow-sm: 0 0 10px rgba(217, 119, 6, 0.08);
+  --info: #2563EB;
+  --info-muted: rgba(37, 99, 235, 0.1);
   
-  /* Glass */
-  --glass-bg: rgba(255, 255, 255, 0.8);
+  /* Shadows - Softer, more diffused */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 24px rgba(217, 119, 6, 0.08);
+  --shadow-glow-sm: 0 0 12px rgba(217, 119, 6, 0.05);
+  
+  /* Glass/Overlay */
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --overlay: rgba(0, 0, 0, 0.4);
+  
+  /* Focus ring */
+  --focus-ring: rgba(217, 119, 6, 0.4);
 }
 
 /* ============================================
@@ -196,7 +240,14 @@ code, pre {
 /* Focus styles for accessibility */
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--focus-ring);
+}
+
+/* Better focus for inputs */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* Custom scrollbar */
@@ -263,44 +314,72 @@ html.theme-transition *::after {
     @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold;
     @apply transition-all duration-150 ease-out;
     @apply active:scale-[0.98];
+    font-family: "Inter", system-ui, sans-serif;
   }
   
   .btn-primary {
     background-color: var(--accent);
-    color: var(--bg-primary);
+    color: #09090B; /* Always dark text on accent */
+    box-shadow: var(--shadow-sm);
   }
   
   .btn-primary:hover {
     background-color: var(--accent-hover);
-    box-shadow: var(--shadow-glow-sm);
+    box-shadow: var(--shadow-md), var(--shadow-glow-sm);
+    transform: translateY(-1px);
+  }
+  
+  .btn-primary:active {
+    background-color: var(--accent-active);
+    transform: translateY(0) scale(0.98);
   }
   
   .btn-secondary {
     background-color: var(--bg-elevated);
     color: var(--text-primary);
     border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
   }
   
   .btn-secondary:hover {
-    border-color: var(--accent);
-    background-color: var(--bg-surface);
+    background-color: var(--bg-hover);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
   }
   
   .btn-ghost {
     color: var(--text-secondary);
+    background-color: transparent;
   }
   
   .btn-ghost:hover {
     color: var(--text-primary);
-    background-color: var(--bg-elevated);
+    background-color: var(--bg-hover);
+  }
+  
+  .btn-danger {
+    background-color: var(--danger);
+    color: white;
+  }
+  
+  .btn-danger:hover {
+    background-color: var(--danger-hover);
   }
 
   /* Card styles */
   .card {
-    background-color: var(--bg-surface);
+    background-color: var(--bg-elevated);
     border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
     @apply rounded-xl;
     @apply transition-all duration-200 ease-out;
+  }
+  
+  .card-flat {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    box-shadow: none;
+    @apply rounded-xl;
   }
   
   .card-interactive {
@@ -308,8 +387,9 @@ html.theme-transition *::after {
   }
   
   .card-interactive:hover {
-    border-color: var(--accent);
-    box-shadow: var(--shadow-glow-sm);
+    background-color: var(--bg-hover);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
   }
   
   .card-interactive:active {
@@ -317,12 +397,13 @@ html.theme-transition *::after {
   }
   
   .card-selected {
-    box-shadow: 0 0 0 2px var(--accent), var(--shadow-glow-sm);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), var(--shadow-glow-sm);
   }
 
   /* Input styles */
   .input {
-    @apply w-full rounded-lg px-3 py-2 text-sm;
+    @apply w-full rounded-lg px-3 py-2.5 text-sm;
     background-color: var(--bg-primary);
     border: 1px solid var(--border);
     color: var(--text-primary);
@@ -330,7 +411,11 @@ html.theme-transition *::after {
   }
   
   .input::placeholder {
-    color: var(--text-muted);
+    color: var(--text-faint);
+  }
+  
+  .input:hover {
+    border-color: var(--border-strong);
   }
   
   .input:focus {
@@ -339,10 +424,15 @@ html.theme-transition *::after {
     box-shadow: 0 0 0 3px var(--accent-muted);
   }
   
+  /* Input with icon */
+  .input-with-icon {
+    @apply pl-10;
+  }
+  
   /* Tab/Toggle styles */
   .tab-group {
     @apply flex gap-1 rounded-lg p-1;
-    background-color: var(--bg-primary);
+    background-color: var(--bg-secondary);
   }
   
   .tab {
@@ -353,12 +443,13 @@ html.theme-transition *::after {
   
   .tab:hover {
     color: var(--text-primary);
+    background-color: var(--bg-hover);
   }
   
   .tab-active {
     background-color: var(--accent);
-    color: var(--bg-primary);
-    @apply shadow-sm;
+    color: #09090B; /* Always dark on accent */
+    box-shadow: var(--shadow-sm);
   }
   
   /* Theme toggle button */
@@ -370,8 +461,8 @@ html.theme-transition *::after {
   }
   
   .theme-toggle:hover {
-    color: var(--text-primary);
-    background-color: var(--bg-elevated);
+    color: var(--accent);
+    background-color: var(--bg-hover);
   }
   
   .theme-toggle svg {
@@ -380,7 +471,37 @@ html.theme-transition *::after {
   }
   
   .theme-toggle:hover svg {
-    @apply scale-110;
+    @apply scale-110 rotate-12;
+  }
+  
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-accent {
+    background-color: var(--accent-muted);
+    color: var(--accent);
+  }
+  
+  .badge-success {
+    background-color: var(--success-muted);
+    color: var(--success);
+  }
+  
+  .badge-danger {
+    background-color: var(--danger-muted);
+    color: var(--danger);
+  }
+  
+  .badge-warning {
+    background-color: var(--warning-muted);
+    color: var(--warning);
+  }
+  
+  .badge-info {
+    background-color: var(--info-muted);
+    color: var(--info);
   }
 }
 
@@ -486,18 +607,25 @@ html.theme-transition *::after {
   .skeleton {
     background: linear-gradient(
       90deg,
-      var(--bg-surface) 25%,
-      var(--bg-elevated) 50%,
-      var(--bg-surface) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-hover) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
-    animation: skeleton-shimmer 1.5s infinite;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
     @apply rounded;
   }
   
   @keyframes skeleton-shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+  }
+  
+  /* Divider */
+  .divider {
+    height: 1px;
+    background-color: var(--border-subtle);
+    @apply w-full;
   }
 
   /* Number counter effect (for stats) */
