@@ -10,6 +10,7 @@ import {
   TEAM_IDS,
   getApiCallCount,
 } from "../services/matchDataApi";
+import { getLeagueForTeam } from "../data/teams";
 
 /**
  * Match Intel Section
@@ -26,8 +27,10 @@ export default function MatchIntelSection({ teamName, league }) {
     injuries: [],
     standings: [],
   });
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const hasTeamId = !!TEAM_IDS[teamName];
+  const teamLeague = getLeagueForTeam(teamName) || league;
 
   useEffect(() => {
     if (!teamName) return;
@@ -41,13 +44,16 @@ export default function MatchIntelSection({ teamName, league }) {
 
   const loadData = async () => {
     try {
+      console.log(`🏟️ Loading data for ${teamName} (${teamLeague})`);
+      
       const [fixture, form, injuries] = await Promise.all([
         getNextFixture(teamName),
         getTeamForm(teamName),
         getInjuries(teamName),
       ]);
       
-      setData(prev => ({ ...prev, fixture, form, injuries }));
+      setData(prev => ({ ...prev, fixture, form, injuries, standings: [] }));
+      setLastUpdated(new Date());
     } catch (err) {
       console.error("Error loading match data:", err);
     } finally {
@@ -81,7 +87,11 @@ export default function MatchIntelSection({ teamName, league }) {
   const loadStandings = async () => {
     if (data.standings.length > 0) return;
     
-    const standings = await getStandings(league);
+    // Determine league from team name for accurate standings
+    const teamLeague = getLeagueForTeam(teamName) || league;
+    console.log(`📊 Loading standings for ${teamLeague} (team: ${teamName})`);
+    
+    const standings = await getStandings(teamLeague);
     setData(prev => ({ ...prev, standings }));
   };
 
@@ -114,24 +124,24 @@ export default function MatchIntelSection({ teamName, league }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center gap-2">
-          <span className="text-accent">⚽</span> Match Intel
-          {!hasApiKey ? (
-            <span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded">
-              Demo Data
-            </span>
-          ) : (
-            <span className="text-[10px] bg-success/20 text-success px-1.5 py-0.5 rounded" title="API calls cached for 10 min">
-              Live • {getApiCallCount()} calls
+          <span className="text-accent">{teamLeague === "NFL" ? "🏈" : teamLeague === "NBA" ? "🏀" : teamLeague === "MLB" ? "⚾" : teamLeague === "NHL" ? "🏒" : "⚽"}</span>
+          Match Intel
+          <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded">
+            {teamLeague}
+          </span>
+          {lastUpdated && (
+            <span className="text-[10px] text-text-muted">
+              Updated {Math.round((Date.now() - lastUpdated.getTime()) / 60000)}m ago
             </span>
           )}
         </h3>
         <a
-          href={`https://www.flashscore.com/team/${teamName.toLowerCase().replace(/\s+/g, "-")}/`}
+          href={`https://www.espn.com/${teamLeague === "NFL" ? "nfl" : teamLeague === "NBA" ? "nba" : teamLeague === "EPL" ? "soccer" : teamLeague.toLowerCase()}/team/_/name/${teamName.toLowerCase().replace(/\s+/g, "-")}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-accent hover:underline"
         >
-          Flashscore →
+          ESPN →
         </a>
       </div>
 
