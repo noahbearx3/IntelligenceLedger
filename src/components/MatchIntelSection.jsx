@@ -171,21 +171,21 @@ export default function MatchIntelSection({ teamName, league }) {
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center gap-2">
-          <span className="text-accent">{sportEmoji}</span>
-          Match Intel
-          <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded font-bold">
+        <h3 className="label flex items-center gap-2">
+          <span className="text-accent text-sm">{sportEmoji}</span>
+          <span className="font-display text-sm font-semibold tracking-normal normal-case text-text-primary">Match Intel</span>
+          <span className="text-2xs bg-accent/20 text-accent px-1.5 py-0.5 rounded font-semibold">
             {teamLeague}
           </span>
           {lastUpdated && (
-            <span className="text-[10px] text-text-muted/70">
+            <span className="text-2xs text-text-muted/70 font-normal normal-case tracking-normal">
               • {Math.round((Date.now() - lastUpdated.getTime()) / 60000)}m ago
             </span>
           )}
         </h3>
         <button
           onClick={loadData}
-          className="text-xs text-text-muted hover:text-accent transition-colors"
+          className="text-xs text-text-muted hover:text-accent transition-colors font-medium"
           title="Refresh data"
         >
           ↻ Refresh

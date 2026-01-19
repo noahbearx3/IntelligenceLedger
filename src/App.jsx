@@ -762,7 +762,7 @@ export default function App() {
         <div className="mx-auto flex max-w-8xl items-center justify-between gap-4 px-6 py-3 md:px-8">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group">
-            <span className="text-2xl font-black tracking-tighter text-text-primary group-hover:text-accent transition-colors">
+            <span className="font-display text-2xl font-bold tracking-tight text-text-primary group-hover:text-accent transition-colors">
               INTEL<span className="text-accent">.</span>
             </span>
           </a>
@@ -862,7 +862,7 @@ export default function App() {
             {/* Team/Player DNA Section */}
             <section className="rounded-2xl border border-border bg-surface">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-6 py-4">
-                <h2 className="font-display text-lg font-bold text-text-primary">Research Hub</h2>
+                <h2 className="font-display text-xl font-semibold tracking-tight text-text-primary">Research Hub</h2>
                 <div className="flex gap-1 rounded-lg bg-ink p-1">
                   {["team", "player"].map((tab) => (
                     <button
@@ -1275,7 +1275,7 @@ export default function App() {
               <div className="space-y-4">
                 {/* Section Header */}
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+                  <h3 className="label">
                     Intelligence Feed
                   </h3>
                   <div className="flex items-center gap-2">
@@ -1400,7 +1400,7 @@ export default function App() {
                 </div>
               </article>
               <article className="rounded-xl bg-ink p-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4">Tidbits</h3>
+                <h3 className="label mb-4">Tidbits</h3>
                 <ul className="space-y-2">
                   {tidbits.map((tidbit) => (
                     <li
@@ -1443,7 +1443,7 @@ export default function App() {
         {/* Ledger Section */}
             <section className="rounded-2xl border border-border bg-surface">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-6 py-4">
-                <h2 className="font-display text-lg font-bold text-text-primary">Pick Ledger</h2>
+                <h2 className="font-display text-xl font-semibold tracking-tight text-text-primary">Pick Ledger</h2>
                 <span className="flex items-center gap-1.5 rounded-full bg-success-muted px-3 py-1 text-xs font-medium text-success">
                   <span className="h-1.5 w-1.5 rounded-full bg-success" />
                   100% Transparent
@@ -1473,7 +1473,7 @@ export default function App() {
 
                 {/* Ledger Table */}
                 <div className="space-y-1">
-                  <div className="grid grid-cols-5 gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-text-muted">
+                  <div className="grid grid-cols-5 gap-4 px-4 py-2 label">
                     <span>Date</span>
                     <span>Pick</span>
                     <span>Units</span>
@@ -1660,8 +1660,8 @@ export default function App() {
 
       {/* Footer */}
       <footer className="mx-auto max-w-8xl border-t border-border/50 px-6 py-8 md:px-8">
-        <p className="text-center text-xs text-text-muted">
-          Intelligence Ledger Beta · Data shown is sample-only · © 2025
+        <p className="text-center text-sm text-text-muted">
+          Intelligence Ledger Beta · Data shown is sample-only · © 2026
         </p>
       </footer>
 
